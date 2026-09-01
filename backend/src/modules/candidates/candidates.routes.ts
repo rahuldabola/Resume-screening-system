@@ -1,19 +1,14 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { z } from 'zod';
 import { ApiError } from '../../utils/ApiError';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { parseResume } from '../scoring/mlServiceClient';
 import * as candidatesService from './candidates.service';
+import { candidateMetaSchema } from './candidates.validation';
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-});
-
-const candidateMetaSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(200),
-  email: z.string().trim().email().optional().or(z.literal('')),
 });
 
 const router = Router();
