@@ -1,0 +1,98 @@
+{
+  "resumes": {
+    "backend_1": "Backend Software Engineer with 4 years of experience building REST APIs using Node.js and Express. Designed and maintained microservices deployed via Docker and Kubernetes on AWS. Worked extensively with PostgreSQL and Redis for caching, and wrote CI/CD pipelines using GitHub Actions. Comfortable with Git-based workflows and code review. Strong background in SQL query optimization and database schema design.",
+    "backend_2": "Full-stack leaning backend developer with 3 years in Python, primarily Django and FastAPI. Built and scaled REST APIs handling authentication, authorization, and third-party integrations. Deployed services with Docker on GCP, wrote unit and integration tests, and used PostgreSQL as the primary datastore. Familiar with Linux server administration and basic CI/CD setup.",
+    "frontend_1": "Frontend Engineer with 3 years of experience building single-page applications in React and TypeScript. Deep knowledge of Redux for state management, responsive CSS with Tailwind, and component testing. Collaborated closely with designers to implement pixel-perfect UI from Figma mockups, and integrated REST APIs into React data-fetching layers. Some exposure to Next.js for server-side rendering.",
+    "frontend_2": "UI-focused web developer skilled in HTML5, CSS3, and vanilla JavaScript, transitioning into modern frameworks. Recently built two projects with Vue.js and one with React, focusing on accessible, responsive layouts. Comfortable with Git and basic build tooling, and has contributed to design system components used across multiple pages.",
+    "data_scientist_1": "Data Scientist with 4 years of experience applying machine learning to business problems. Proficient in Python, pandas, numpy, and scikit-learn for feature engineering, model training, and evaluation including cross-validation and hyperparameter tuning. Built NLP pipelines for text classification and worked with TensorFlow for a deep learning image project. Strong SQL skills for data extraction from PostgreSQL warehouses.",
+    "data_scientist_2": "Machine learning engineer background in predictive modeling and data analysis using Python and scikit-learn. Experience training and evaluating classification and regression models, including feature engineering and model evaluation with proper train/test splits. Familiar with PyTorch for research prototypes, and comfortable writing SQL for data pipelines feeding into ML models.",
+    "devops_1": "DevOps engineer with 5 years managing cloud infrastructure on AWS, including EC2, S3, and container orchestration with Kubernetes. Built CI/CD pipelines with Jenkins and GitHub Actions, and containerized applications with Docker for consistent deployments. Strong Linux administration background and experience with infrastructure as code. Some scripting in Python for automation tasks.",
+    "devops_2": "Site reliability / DevOps specialist experienced with Docker, Kubernetes (k8s), and CI/CD automation across GCP and Azure. Focused on reducing deployment friction through containerization and continuous integration practices. Comfortable with Linux systems, monitoring, and incident response, with working knowledge of Git-based deployment workflows.",
+    "sales_1": "B2B Sales Representative with 5 years of experience managing a full sales cycle from prospecting to close. Consistently exceeded quota attainment targets by 20%+ using a consultative selling approach. Managed pipeline in Salesforce CRM and collaborated with marketing on campaign follow-up. Strong relationship-building and negotiation skills across enterprise accounts.",
+    "sales_2": "Account Executive focused on B2B software sales, responsible for outbound prospecting, running product demos, and closing net-new business. Track record of hitting quota attainment quarter over quarter. Experienced with CRM pipeline management and cross-functional collaboration with customer success teams.",
+    "marketing_1": "Digital Marketing Manager with 4 years of experience in SEO, content strategy, and campaign management across paid and organic channels. Led content strategy that increased organic traffic significantly, and managed multi-channel campaign management for product launches. Skilled in analytics-driven decision-making and A/B testing of landing pages.",
+    "marketing_2": "Marketing specialist experienced in SEO optimization, social media campaign management, and content strategy for B2C brands. Built editorial calendars, coordinated with design on creative assets, and reported on campaign performance metrics to leadership.",
+    "accounting_1": "Staff Accountant with 3 years of experience in bookkeeping, financial reporting, and month-end close processes under GAAP. Prepared financial statements, reconciled accounts, and supported external audits. Proficient in accounting software and Excel-based financial modeling.",
+    "accounting_2": "Senior Accountant responsible for financial reporting, GAAP-compliant bookkeeping, and accounts payable/receivable management. Led month-end and year-end close, and partnered with FP&A on budgeting. Strong attention to detail in reconciliations and audit preparation.",
+    "design_1": "Graphic Designer with 4 years of experience creating brand identities, marketing collateral, and digital assets using Adobe Photoshop, Illustrator, and Figma. Collaborated with marketing teams on campaign visuals and maintained brand consistency across print and digital channels.",
+    "design_2": "UI/UX-focused graphic designer proficient in Figma and Adobe Illustrator, designing marketing materials, social graphics, and presentation decks. Strong visual design sense with experience translating brand guidelines into consistent creative assets.",
+    "support_1": "Customer Support Specialist with 3 years of experience resolving technical issues via help desk ticketing systems. Maintained high customer satisfaction scores while handling high-volume support queues, and documented recurring issues for the product team.",
+    "support_2": "Customer service representative with experience in phone and chat-based support, handling escalations and maintaining service-level agreements. Experienced with help desk software and cross-training new support staff."
+  },
+  "jobs": {
+    "backend_job": "We are hiring a Backend Engineer to design and build REST APIs using Node.js and Express, working with PostgreSQL and Redis. You'll containerize services with Docker, deploy to AWS, and contribute to our CI/CD pipeline. Strong SQL skills and experience with microservices architecture required. Familiarity with Git-based workflows expected.",
+    "frontend_job": "Looking for a Frontend Engineer to build responsive user interfaces in React and TypeScript. You'll work with Redux for state management, implement designs from Figma using Tailwind CSS, and integrate REST APIs. Experience with Next.js is a plus.",
+    "data_scientist_job": "Seeking a Data Scientist to build machine learning models for churn prediction. Requires strong Python skills including pandas, numpy, and scikit-learn, experience with feature engineering and model evaluation, and comfort writing SQL against a PostgreSQL warehouse. NLP experience is a plus.",
+    "devops_job": "Hiring a DevOps Engineer to manage our AWS infrastructure, build CI/CD pipelines, and maintain our Kubernetes clusters. You'll containerize applications with Docker, automate deployments, and support Linux-based production systems. Scripting ability (Python) preferred.",
+    "sales_job": "We're hiring a B2B Sales Account Executive to own the full sales cycle: prospecting, demos, negotiation, and close. You'll manage your pipeline in our CRM and consistently work toward quota attainment. Enterprise sales experience a plus.",
+    "marketing_job": "Seeking a Marketing Manager to lead SEO strategy, content strategy, and campaign management across our digital channels. You'll own the content calendar, run A/B tests on landing pages, and report on campaign performance.",
+    "accounting_job": "Hiring a Staff Accountant to handle bookkeeping, GAAP-compliant financial reporting, and month-end close. You'll reconcile accounts, support audits, and assist with financial statement preparation.",
+    "design_job": "Looking for a Graphic Designer to create marketing collateral and brand assets using Adobe Photoshop, Illustrator, and Figma. You'll partner with marketing on campaign visuals and maintain consistent brand identity across channels.",
+    "support_job": "Hiring a Customer Support Specialist to resolve technical issues through our help desk ticketing system, maintain strong customer satisfaction, and document recurring issues for engineering.",
+    "fullstack_job": "Hiring a Full-Stack Engineer comfortable across the stack: React/TypeScript on the frontend, Node.js/Express REST APIs on the backend, PostgreSQL for storage, and Docker for deployment. You'll ship features end-to-end."
+  },
+  "pairs": [
+    { "resume": "backend_1", "job": "backend_job", "label": 1 },
+    { "resume": "backend_2", "job": "backend_job", "label": 1 },
+    { "resume": "backend_1", "job": "fullstack_job", "label": 1 },
+    { "resume": "backend_2", "job": "devops_job", "label": 1 },
+
+    { "resume": "frontend_1", "job": "frontend_job", "label": 1 },
+    { "resume": "frontend_2", "job": "frontend_job", "label": 1 },
+    { "resume": "frontend_1", "job": "fullstack_job", "label": 1 },
+
+    { "resume": "data_scientist_1", "job": "data_scientist_job", "label": 1 },
+    { "resume": "data_scientist_2", "job": "data_scientist_job", "label": 1 },
+
+    { "resume": "devops_1", "job": "devops_job", "label": 1 },
+    { "resume": "devops_2", "job": "devops_job", "label": 1 },
+    { "resume": "devops_1", "job": "backend_job", "label": 1 },
+
+    { "resume": "sales_1", "job": "sales_job", "label": 1 },
+    { "resume": "sales_2", "job": "sales_job", "label": 1 },
+
+    { "resume": "marketing_1", "job": "marketing_job", "label": 1 },
+    { "resume": "marketing_2", "job": "marketing_job", "label": 1 },
+
+    { "resume": "accounting_1", "job": "accounting_job", "label": 1 },
+    { "resume": "accounting_2", "job": "accounting_job", "label": 1 },
+
+    { "resume": "design_1", "job": "design_job", "label": 1 },
+    { "resume": "design_2", "job": "design_job", "label": 1 },
+
+    { "resume": "support_1", "job": "support_job", "label": 1 },
+    { "resume": "support_2", "job": "support_job", "label": 1 },
+
+    { "resume": "backend_1", "job": "sales_job", "label": 0 },
+    { "resume": "backend_2", "job": "marketing_job", "label": 0 },
+    { "resume": "backend_1", "job": "accounting_job", "label": 0 },
+    { "resume": "backend_2", "job": "design_job", "label": 0 },
+
+    { "resume": "frontend_1", "job": "accounting_job", "label": 0 },
+    { "resume": "frontend_2", "job": "sales_job", "label": 0 },
+    { "resume": "frontend_1", "job": "support_job", "label": 0 },
+
+    { "resume": "data_scientist_1", "job": "sales_job", "label": 0 },
+    { "resume": "data_scientist_2", "job": "design_job", "label": 0 },
+    { "resume": "data_scientist_1", "job": "marketing_job", "label": 0 },
+
+    { "resume": "devops_1", "job": "accounting_job", "label": 0 },
+    { "resume": "devops_2", "job": "support_job", "label": 0 },
+
+    { "resume": "sales_1", "job": "backend_job", "label": 0 },
+    { "resume": "sales_2", "job": "data_scientist_job", "label": 0 },
+    { "resume": "sales_1", "job": "design_job", "label": 0 },
+
+    { "resume": "marketing_1", "job": "accounting_job", "label": 0 },
+    { "resume": "marketing_2", "job": "devops_job", "label": 0 },
+
+    { "resume": "accounting_1", "job": "frontend_job", "label": 0 },
+    { "resume": "accounting_2", "job": "sales_job", "label": 0 },
+
+    { "resume": "design_1", "job": "backend_job", "label": 0 },
+    { "resume": "design_2", "job": "data_scientist_job", "label": 0 },
+
+    { "resume": "support_1", "job": "marketing_job", "label": 0 },
+    { "resume": "support_2", "job": "backend_job", "label": 0 }
+  ]
+}

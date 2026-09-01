@@ -1,0 +1,31 @@
+services:
+  ml-service:
+    build: ./ml-service
+    ports:
+      - "8000:8000"
+
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    environment:
+      ML_SERVICE_URL: http://ml-service:8000
+      CLIENT_ORIGIN: http://localhost:5173
+      DATABASE_PATH: /app/data/screening.db
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      - ml-service
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:4000/api
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend-data:
