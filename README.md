@@ -1,5 +1,7 @@
 # ScreenSmart — AI-Powered Resume Screening System
 
+[![CI](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml/badge.svg)](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml)
+
 An end-to-end recruitment platform: post a job, upload resumes, and get candidates automatically ranked by how well they match — with a transparent score breakdown, not a black-box number.
 
 **Stack:** React 18 + TypeScript · Node.js + Express + TypeScript · Python + FastAPI + scikit-learn · SQLite · Docker
@@ -63,6 +65,7 @@ ml-service/        Python + FastAPI — resume parsing, skill extraction, scorin
   evaluation/      the labeled dataset + evaluate.py (produces the numbers above)
   tests/           pytest unit tests for the scoring/extraction logic
 docker-compose.yml runs all three services together
+.github/workflows/  CI: typecheck + test every service, then build all Docker images
 ```
 
 ## Running it
@@ -105,15 +108,17 @@ npm run dev           # http://localhost:5173
 
 ## Tests
 
+75 automated tests total, all run on every push via [CI](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three Docker images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure, not just asserted.
+
 ```bash
-# ML service: unit tests for skill extraction + scoring
-cd ml-service && python -m pytest tests/ -v            # 9 tests
+# ML service: unit tests (skill extraction, scoring, resume parsing) + the FastAPI endpoints
+cd ml-service && python -m pytest tests/ -v              # 24 tests
 
 # ML service: the accuracy evaluation itself
 cd ml-service && python -m evaluation.evaluate
 
 # Backend: unit + integration tests (Jest + Supertest, ML service calls mocked)
-cd backend && npm test                                   # 14 tests
+cd backend && npm test                                    # 51 tests
 ```
 
 ## API overview
