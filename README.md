@@ -34,7 +34,7 @@ Match score is a weighted combination of two independent signals, computed per (
 1. **Skill overlap (65% weight)** — of the skills the job description asks for, what fraction does the candidate's resume actually mention? Skills are identified via a curated ~50-skill taxonomy with alias matching (`ml-service/app/skills_taxonomy.py`) — e.g. "node.js", "nodejs", and "node" all resolve to the same skill.
 2. **TF-IDF cosine similarity (35% weight)** — how similar is the resume's overall language to the job description's, via scikit-learn's `TfidfVectorizer`? This catches relevant experience the fixed taxonomy doesn't have a keyword for.
 
-**This is backed by a real, reproducible evaluation, not an asserted number.** `ml-service/evaluation/eval_dataset.json` contains 45 hand-labeled (resume, job, is-a-match) pairs across 9 job domains (backend, frontend, data science, DevOps, sales, marketing, accounting, design, support), including same-domain matches and deliberately-mismatched cross-domain pairs. Running the evaluation:
+**This is backed by a real, reproducible evaluation, not an asserted number** — but be precise about what it measures. `ml-service/evaluation/eval_dataset.json` contains 45 hand-labeled (resume, job, is-a-match) pairs across 9 job domains (backend, frontend, data science, DevOps, sales, marketing, accounting, design, support), including same-domain matches and deliberately-mismatched cross-domain pairs. The 97.8% below is accuracy on that binary same-domain-vs-wrong-domain question, at the threshold that best separates the two groups — it is **not** a measure of fine-grained ranking quality among candidates who are all in the right field; nothing in this repo evaluates that. Running the evaluation:
 
 ```bash
 cd ml-service
@@ -108,7 +108,7 @@ npm run dev           # http://localhost:5173
 
 ## Tests
 
-75 automated tests total, all run on every push via [CI](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three Docker images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure, not just asserted.
+76 automated tests total, all run on every push via [CI](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three Docker images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure, not just asserted.
 
 ```bash
 # ML service: unit tests (skill extraction, scoring, resume parsing) + the FastAPI endpoints
@@ -118,7 +118,7 @@ cd ml-service && python -m pytest tests/ -v              # 24 tests
 cd ml-service && python -m evaluation.evaluate
 
 # Backend: unit + integration tests (Jest + Supertest, ML service calls mocked)
-cd backend && npm test                                    # 51 tests
+cd backend && npm test                                    # 52 tests
 ```
 
 ## API overview
@@ -145,8 +145,9 @@ ML service (called by the backend, not the frontend directly):
 ## Known limitations
 
 - Skill extraction is keyword/taxonomy-based, not a trained NER model — it's fast, deterministic, and needs no training data, but it will miss skills phrased in ways the taxonomy doesn't cover. Extending it is a one-line addition to `skills_taxonomy.py`.
-- No authentication — this is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS product.
+- No authentication — this is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS product. The backend does apply a per-IP rate limit (`backend/src/middleware/rateLimiter.ts`, 300 req/15min, skipped only in tests) as a cheap guard against one client burning ML-service CPU — that's abuse mitigation, not access control, and doesn't substitute for real auth.
 - SQLite, not a client-server database — genuinely fine at this scale, but a real deployment serving concurrent recruiters would move to PostgreSQL (the schema is already normalized and would port directly).
+- The 97.8% evaluation number measures same-domain-vs-wrong-domain classification, not ranking quality among in-domain candidates — see the caveat in the evaluation section above.
 
 ## License
 
