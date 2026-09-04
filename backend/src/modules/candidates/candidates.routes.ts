@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { ApiError } from '../../utils/ApiError';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { parseId } from '../../utils/parseId';
 import { parseResume } from '../scoring/mlServiceClient';
 import * as candidatesService from './candidates.service';
 import { candidateMetaSchema } from './candidates.validation';
@@ -39,13 +40,14 @@ router.post(
 );
 
 router.get('/:id', asyncHandler(async (req, res) => {
-  const candidate = candidatesService.getCandidateById(Number(req.params.id));
+  const candidate = candidatesService.getCandidateById(parseId(req.params.id, 'candidate id'));
   if (!candidate) throw new ApiError(404, 'Candidate not found');
   res.json(candidate);
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
-  candidatesService.deleteCandidate(Number(req.params.id));
+  const deleted = candidatesService.deleteCandidate(parseId(req.params.id, 'candidate id'));
+  if (!deleted) throw new ApiError(404, 'Candidate not found');
   res.status(204).send();
 }));
 

@@ -22,7 +22,13 @@ export function getJobById(id: number): Job | undefined {
   return db.prepare('SELECT * FROM jobs WHERE id = ?').get(id) as Job | undefined;
 }
 
-export function deleteJob(id: number): void {
+/**
+ * Delete a job and the rankings computed for it, atomically.
+ *
+ * Returns false if there was no such job.
+ */
+export const deleteJob = db.transaction((id: number): boolean => {
   db.prepare('DELETE FROM assessment_results WHERE job_id = ?').run(id);
-  db.prepare('DELETE FROM jobs WHERE id = ?').run(id);
-}
+  const info = db.prepare('DELETE FROM jobs WHERE id = ?').run(id);
+  return Number(info.changes) > 0;
+});

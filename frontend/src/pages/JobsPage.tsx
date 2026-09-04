@@ -13,8 +13,10 @@ export function JobsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  async function refresh() {
-    setLoading(true);
+  // Split so the mount effect doesn't call setLoading synchronously: `loading`
+  // already starts true, and a synchronous setState inside an effect just
+  // schedules a second render before the first has painted.
+  async function load() {
     try {
       setJobs(await listJobs());
     } catch (err) {
@@ -24,8 +26,14 @@ export function JobsPage() {
     }
   }
 
+  async function refresh() {
+    setLoading(true);
+    await load();
+  }
+
   useEffect(() => {
-    refresh();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSubmit(e: FormEvent) {

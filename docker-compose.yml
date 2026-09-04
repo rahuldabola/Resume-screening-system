@@ -3,6 +3,12 @@ services:
     build: ./ml-service
     ports:
       - "8000:8000"
+    environment:
+      # Only the Node backend calls this service, and it does so server to
+      # server, where CORS does not apply. Pinning the value anyway keeps a
+      # browser on some other page from calling it directly if the port is
+      # ever exposed publicly.
+      ALLOWED_ORIGINS: http://localhost:4000
 
   backend:
     build: ./backend

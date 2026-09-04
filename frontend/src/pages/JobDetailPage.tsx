@@ -6,6 +6,7 @@ import { parseSkills } from '../api/types';
 import type { AssessmentResult, Job } from '../api/types';
 import { ScoreBadge } from '../components/ScoreBadge';
 import { SkillPills } from '../components/SkillPills';
+import { StuffingWarning } from '../components/StuffingWarning';
 
 export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -101,6 +102,7 @@ export function JobDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    {result.stuffing_factor < 1 && <StuffingWarning result={result} />}
                     <span className="text-lg font-bold text-slate-900">{result.match_score}%</span>
                     <ScoreBadge score={result.match_score} />
                   </div>
@@ -120,10 +122,17 @@ export function JobDetailPage() {
                       </p>
                       <SkillPills skills={parseSkills(result.missing_skills)} tone="negative" />
                     </div>
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-2 space-y-1">
                       <p className="text-xs text-slate-400">
-                        TF-IDF text similarity: {result.tfidf_similarity}%
+                        TF-IDF text similarity: {result.tfidf_similarity}% (fit across this job&rsquo;s
+                        whole candidate pool, so it is comparable between candidates)
                       </p>
+                      {result.stuffing_factor < 1 && (
+                        <p className="text-xs text-amber-700">
+                          Keyword density {Math.round(result.keyword_coverage * 100)}% &mdash; score
+                          damped to {Math.round(result.stuffing_factor * 100)}% of its raw value.
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

@@ -33,7 +33,17 @@ export function getCandidateById(id: number): Candidate | undefined {
   return db.prepare('SELECT * FROM candidates WHERE id = ?').get(id) as Candidate | undefined;
 }
 
-export function deleteCandidate(id: number): void {
+/**
+ * Delete a candidate and every score derived from them.
+ *
+ * Both statements run in one transaction: assessment_results has a foreign key
+ * onto candidates, so a failure between the two would leave the candidate row
+ * present but their ranking history already gone.
+ *
+ * Returns false if there was no such candidate.
+ */
+export const deleteCandidate = db.transaction((id: number): boolean => {
   db.prepare('DELETE FROM assessment_results WHERE candidate_id = ?').run(id);
-  db.prepare('DELETE FROM candidates WHERE id = ?').run(id);
-}
+  const info = db.prepare('DELETE FROM candidates WHERE id = ?').run(id);
+  return Number(info.changes) > 0;
+});

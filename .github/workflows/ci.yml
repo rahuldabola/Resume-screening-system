@@ -8,7 +8,7 @@ on:
 
 jobs:
   ml-service:
-    name: ML service (pytest + evaluation)
+    name: ML service (pytest + evaluations)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -20,8 +20,13 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - run: python -m pytest tests/ -v
-      - name: Run accuracy evaluation
+
+      # Both evaluations run on every push, so the numbers quoted in the README
+      # cannot silently drift away from what the code actually produces.
+      - name: Classification evaluation (right field vs wrong field)
         run: python -m evaluation.evaluate
+      - name: Ranking evaluation (ordering within one field)
+        run: python -m evaluation.evaluate_ranking
 
   backend:
     name: Backend (typecheck + tests)
@@ -39,7 +44,7 @@ jobs:
       - run: npm test
 
   frontend:
-    name: Frontend (typecheck + build)
+    name: Frontend (lint + typecheck + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -50,6 +55,7 @@ jobs:
         with:
           node-version: "22"
       - run: npm ci
+      - run: npm run lint
       - run: npm run build
 
   docker:

@@ -1,4 +1,4 @@
-import { parseResume, scoreMatch } from '../mlServiceClient';
+import { parseResume, scoreMatch, scoreMatchBatch } from '../mlServiceClient';
 
 function fakeResponse(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as Response;
@@ -15,7 +15,9 @@ describe('mlServiceClient', () => {
         match_score: 80,
         skill_overlap_score: 100,
         tfidf_similarity: 40,
-        is_strong_match: true,
+        clears_domain_floor: true,
+        keyword_coverage: 0.12,
+        stuffing_factor: 1,
         matched_skills: ['python'],
         missing_skills: [],
         resume_skills: ['python'],
@@ -38,6 +40,63 @@ describe('mlServiceClient', () => {
     it('throws when the ML service is unreachable', async () => {
       jest.spyOn(global, 'fetch').mockRejectedValue(new Error('fetch failed'));
       await expect(scoreMatch('resume', 'job')).rejects.toThrow('fetch failed');
+    });
+  });
+
+  describe('scoreMatchBatch', () => {
+    const scored = (id: number, match_score: number) => ({
+      id,
+      match_score,
+      skill_overlap_score: 100,
+      tfidf_similarity: 40,
+      clears_domain_floor: true,
+      keyword_coverage: 0.12,
+      stuffing_factor: 1,
+      matched_skills: ['python'],
+      missing_skills: [],
+      resume_skills: ['python'],
+      required_skills: ['python'],
+    });
+
+    it('returns one result per resume', async () => {
+      const results = [scored(1, 80), scored(2, 30)];
+      jest.spyOn(global, 'fetch').mockResolvedValue(fakeResponse({ results }));
+
+      const received = await scoreMatchBatch(
+        [{ id: 1, text: 'resume one' }, { id: 2, text: 'resume two' }],
+        'job text'
+      );
+      expect(received).toEqual(results);
+    });
+
+    it('short-circuits without calling the ML service for an empty pool', async () => {
+      const fetchSpy = jest.spyOn(global, 'fetch');
+      await expect(scoreMatchBatch([], 'job text')).resolves.toEqual([]);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('throws when the ML service returns the wrong number of results', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue(fakeResponse({ results: [scored(1, 80)] }));
+
+      await expect(
+        scoreMatchBatch([{ id: 1, text: 'one' }, { id: 2, text: 'two' }], 'job text')
+      ).rejects.toThrow(/unexpected result set/);
+    });
+
+    it('throws when the ML service returns a malformed body', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue(fakeResponse({ nonsense: true }));
+
+      await expect(scoreMatchBatch([{ id: 1, text: 'one' }], 'job text')).rejects.toThrow(
+        /unexpected result set/
+      );
+    });
+
+    it('surfaces an ML service error as an ApiError', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValue(
+        fakeResponse({ detail: 'job_description is required.' }, false, 400)
+      );
+
+      await expect(scoreMatchBatch([{ id: 1, text: 'one' }], '')).rejects.toThrow(/ML service error/);
     });
   });
 

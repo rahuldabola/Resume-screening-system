@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ApiError } from '../../utils/ApiError';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { parseId } from '../../utils/parseId';
 import * as jobsService from './jobs.service';
 import { createJobSchema } from './jobs.validation';
 
@@ -17,13 +18,14 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
-  const job = jobsService.getJobById(Number(req.params.id));
+  const job = jobsService.getJobById(parseId(req.params.id, 'job id'));
   if (!job) throw new ApiError(404, 'Job not found');
   res.json(job);
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
-  jobsService.deleteJob(Number(req.params.id));
+  const deleted = jobsService.deleteJob(parseId(req.params.id, 'job id'));
+  if (!deleted) throw new ApiError(404, 'Job not found');
   res.status(204).send();
 }));
 

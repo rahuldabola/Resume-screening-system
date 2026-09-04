@@ -11,6 +11,33 @@ function fakeJsonResponse(body: unknown, ok = true, status = 200) {
   } as Response;
 }
 
+/**
+ * Build a /score-batch response that echoes back the ids the backend sent.
+ *
+ * The batch endpoint tags each result with its candidate id, so a fixed
+ * fixture would not exercise the id mapping the scoring service depends on.
+ */
+function fakeBatchResponse(init: RequestInit | undefined, overrides: Record<string, unknown>) {
+  const { resumes } = JSON.parse(String(init?.body ?? '{}')) as { resumes: { id: number }[] };
+
+  return fakeJsonResponse({
+    results: resumes.map((resume) => ({
+      id: resume.id,
+      match_score: 0,
+      skill_overlap_score: 0,
+      tfidf_similarity: 0,
+      clears_domain_floor: false,
+      keyword_coverage: 0.1,
+      stuffing_factor: 1,
+      matched_skills: [],
+      missing_skills: [],
+      resume_skills: [],
+      required_skills: [],
+      ...overrides,
+    })),
+  });
+}
+
 describe('resume screening API', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -51,7 +78,7 @@ describe('resume screening API', () => {
   });
 
   it('uploads a candidate resume (ML service mocked) and ranks it against a job', async () => {
-    jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+    jest.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.includes('/parse-resume')) {
         return fakeJsonResponse({
@@ -60,14 +87,13 @@ describe('resume screening API', () => {
           char_count: 70,
         });
       }
-      if (url.includes('/score')) {
-        return fakeJsonResponse({
+      if (url.includes('/score-batch')) {
+        return fakeBatchResponse(init, {
           match_score: 88.4,
           skill_overlap_score: 100,
           tfidf_similarity: 60.1,
-          is_strong_match: true,
+          clears_domain_floor: true,
           matched_skills: ['node.js', 'express', 'postgresql'],
-          missing_skills: [],
           resume_skills: ['node.js', 'express', 'postgresql'],
           required_skills: ['node.js', 'express', 'postgresql'],
         });
@@ -167,15 +193,15 @@ describe('resume screening API', () => {
   });
 
   it('rescores a single candidate via the rescore endpoint', async () => {
-    jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+    jest.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.includes('/parse-resume')) {
         return fakeJsonResponse({ text: 'Python and scikit-learn experience.', skills: ['python', 'scikit-learn'], char_count: 36 });
       }
-      if (url.includes('/score')) {
-        return fakeJsonResponse({
-          match_score: 77, skill_overlap_score: 100, tfidf_similarity: 50, is_strong_match: true,
-          matched_skills: ['python'], missing_skills: [], resume_skills: ['python'], required_skills: ['python'],
+      if (url.includes('/score-batch')) {
+        return fakeBatchResponse(init, {
+          match_score: 77, skill_overlap_score: 100, tfidf_similarity: 50, clears_domain_floor: true,
+          matched_skills: ['python'], resume_skills: ['python'], required_skills: ['python'],
         });
       }
       throw new Error(`Unexpected fetch to ${url}`);
@@ -192,6 +218,27 @@ describe('resume screening API', () => {
     const rescoreRes = await request(app).post(`/api/jobs/${jobRes.body.id}/rescore/${candidateRes.body.id}`);
     expect(rescoreRes.status).toBe(200);
     expect(rescoreRes.body[0].match_score).toBe(77);
+  });
+
+  it('rejects a non-numeric id with a 400 rather than a silent 404', async () => {
+    const res = await request(app).get('/api/jobs/not-a-number');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/positive integer/);
+  });
+
+  it('rejects a negative id with a 400', async () => {
+    const res = await request(app).delete('/api/candidates/-5');
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 when deleting a job that does not exist', async () => {
+    const res = await request(app).delete('/api/jobs/999999');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when deleting a candidate that does not exist', async () => {
+    const res = await request(app).delete('/api/candidates/999999');
+    expect(res.status).toBe(404);
   });
 
   it('returns 404 when rescoring against a non-existent job', async () => {

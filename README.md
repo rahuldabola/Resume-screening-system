@@ -1,16 +1,16 @@
 # ScreenSmart — AI-Powered Resume Screening System
 
-[![CI](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml/badge.svg)](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml)
+[![CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml/badge.svg)](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml)
 
 An end-to-end recruitment platform: post a job, upload resumes, and get candidates automatically ranked by how well they match — with a transparent score breakdown, not a black-box number.
 
-**Stack:** React 18 + TypeScript · Node.js + Express + TypeScript · Python + FastAPI + scikit-learn · SQLite · Docker
+**Stack:** React 19 + TypeScript · Node.js + Express + TypeScript · Python + FastAPI + scikit-learn · SQLite · Docker
 
 ## What it does
 
 1. **Post a job** — title + description.
 2. **Upload resumes** (PDF, DOCX, or TXT) — text is extracted and skills are identified automatically.
-3. **Rank candidates** — every uploaded resume is scored against the job description and sorted best-first, with a visible breakdown of *why* each candidate scored the way they did (matched skills, missing skills, text similarity).
+3. **Rank candidates** — every uploaded resume is scored against the job description and sorted best-first, with a visible breakdown of *why* each candidate scored the way they did (matched skills, missing skills, text similarity, and any keyword-stuffing penalty).
 
 ## Architecture
 
@@ -27,33 +27,85 @@ An end-to-end recruitment platform: post a job, upload resumes, and get candidat
 
 The Node API owns persistence, file upload, and orchestration. The Python service owns everything NLP/ML: resume text extraction, skill extraction, and the actual matching model. This split mirrors how these systems are built in practice — a general-purpose backend calling out to a specialized ML service rather than reimplementing text processing in two languages.
 
-## The matching model — and a real accuracy number
+## The matching model
 
-Match score is a weighted combination of two independent signals, computed per (resume, job) pair:
+Match score is a weighted combination of two independent signals:
 
-1. **Skill overlap (65% weight)** — of the skills the job description asks for, what fraction does the candidate's resume actually mention? Skills are identified via a curated ~50-skill taxonomy with alias matching (`ml-service/app/skills_taxonomy.py`) — e.g. "node.js", "nodejs", and "node" all resolve to the same skill.
-2. **TF-IDF cosine similarity (35% weight)** — how similar is the resume's overall language to the job description's, via scikit-learn's `TfidfVectorizer`? This catches relevant experience the fixed taxonomy doesn't have a keyword for.
+1. **Skill overlap (65%)** — of the skills the job description asks for, what fraction does the candidate's resume actually mention? Skills come from a curated ~50-skill taxonomy with alias matching (`ml-service/app/skills_taxonomy.py`).
+2. **TF-IDF cosine similarity (35%)** — how similar is the resume's overall language to the job description's? This catches relevant experience the fixed taxonomy has no keyword for.
 
-**This is backed by a real, reproducible evaluation, not an asserted number** — but be precise about what it measures. `ml-service/evaluation/eval_dataset.json` contains 45 hand-labeled (resume, job, is-a-match) pairs across 9 job domains (backend, frontend, data science, DevOps, sales, marketing, accounting, design, support), including same-domain matches and deliberately-mismatched cross-domain pairs. The 97.8% below is accuracy on that binary same-domain-vs-wrong-domain question, at the threshold that best separates the two groups — it is **not** a measure of fine-grained ranking quality among candidates who are all in the right field; nothing in this repo evaluates that. Running the evaluation:
+The result is then damped if the resume looks keyword-stuffed (see below).
+
+### Extraction is built around avoiding false positives
+
+Naive keyword matching gets a hiring shortlist wrong in two specific ways, and both are handled explicitly rather than waved at in a limitations section:
+
+**Ambiguous aliases.** Several skill names are also ordinary English words. A plain word-boundary match reads this sales resume as a Go/Express/ML engineer:
+
+> "I go above and beyond to express our value and drive go-to-market strategy. Managed 500 ml of reagent per assay."
+
+An alias in `AMBIGUOUS_ALIASES` only counts when the surrounding 25 characters contain a technical cue, or an unambiguous *technical* skill. (Non-technical skills deliberately don't count as support — otherwise "sales" sitting next to "go" validates it.) A related structural fix: `\bjs\b` matches inside "node.js", so every alias carries a `(?<!\.)` guard against matching the tail of a dotted token.
+
+**Negation.** "No professional Python experience" and "never used Docker" both contain the keyword while denying it. A negated-capability phrase suppresses the skill names it governs, stopping at the end of the clause — so "Never used Docker. Kubernetes in production for 3 years" still credits Kubernetes, and "Zero downtime deployments with Docker" is not read as a denial.
+
+### Keyword stuffing is detected, not ignored
+
+A resume that is nothing but a comma-separated list of every skill in the taxonomy has a perfect skill overlap and no evidence behind it. Measured over the labelled corpus, genuine resume and job prose has a keyword density of **0.07–0.33**; a bare skills dump runs **0.85+**. Scores are damped on a ramp that starts at 0.40 — above anything real prose produces — down to a floor of 20%. The penalty and the density are returned by the API and shown in the UI, so a recruiter can see *why* a keyword-perfect candidate ranks below a candidate who described actual work.
+
+### Scores are pool-relative, deliberately
+
+`TfidfVectorizer` estimates IDF from the documents it is fit on. Fitting it on just `[resume, job]` gives a two-document corpus where a term appearing in **both** gets idf = ln(3/2)+1 = 1.405 while a term appearing in one gets 1.0 — terms *shared* by the resume and the job are weighted *below* terms unique to one of them, which is backwards for a similarity measure. The vectorizer is therefore fit across the whole candidate pool plus the job (`POST /score-batch`), which is also why ranking is one round trip rather than one per candidate.
+
+The consequence, stated plainly: the same pair can score differently in a pool of 3 than in a pool of 50. That is correct for ranking candidates against one another, and it is why re-scoring a single candidate still runs the whole pool.
+
+## Evaluation — two questions, two answers
+
+Both evaluations run in CI on every push, so the numbers below can't drift from what the code produces.
+
+### 1. Is the candidate even in the right field?
 
 ```bash
-cd ml-service
-python -m evaluation.evaluate
+cd ml-service && python -m evaluation.evaluate
 ```
 
-produces:
+45 hand-labeled (resume, job, is-a-match) pairs across 9 domains:
 
 ```
 Pairs evaluated:     45
 Best threshold:      3.0
-Accuracy:            97.8%
-Precision:           95.7%
-Recall:              100.0%
-F1:                  97.8%
+Accuracy:            97.8%    Precision: 95.7%    Recall: 100.0%    F1: 97.8%
 Confusion matrix:    TP=22 FN=0 FP=1 TN=22
 ```
 
-The one misclassification is printed by the script too — a sales resume scoring 34.9 against a design job, both of which happen to contain a handful of shared non-technical words. Nothing here is cherry-picked: the dataset was written before the passing threshold was chosen, and the threshold itself is just the value that maximizes accuracy on that fixed dataset (the standard way to calibrate a continuous score into a binary decision).
+**Read this number with the caveat the script prints underneath it.** Wrong-field pairs score 0.0–34.8 and right-field pairs score 21.3–83.2, and *every threshold from 3.0 to 21.0 gives the identical 97.8%*. A wide tie band means the classes barely overlap — this is an easy question, and 97.8% mostly says the model can tell a sales resume from a DevOps posting. It is a domain filter, not a quality bar.
+
+There's a second caveat worth stating: the taxonomy's non-technical skills and this dataset's mismatch pairs were built alongside each other, so the number is not fully independent of the thing it measures.
+
+### 2. Can it rank candidates who are all in the right field?
+
+This is the question a recruiter actually has, and the harder one.
+
+```bash
+cd ml-service && python -m evaluation.evaluate_ranking
+```
+
+`ml-service/evaluation/ranking_dataset.json` holds 4 job postings × 6 same-field candidates, each graded 1–5 against a written rubric (exact stack + senior → right field in name only). Grades were assigned from the rubric before any model score was computed, and not adjusted afterwards.
+
+```
+Job postings:        4
+Graded pairs:        24
+Mean Spearman rho:   +0.91   (per job: +0.90, +0.93, +0.90, +0.90)
+Mean NDCG@3:         0.95
+Top-1 hit rate:      3/4
+```
+
+Spearman is the headline: +0.91 means the model's ordering closely tracks the human ordering, consistently across all four domains rather than on one lucky posting. The failure modes it does have are consistent and worth naming:
+
+- **It cannot read seniority.** A junior data scientist who names the right tools (graded 2) ranks 3rd, above a senior ML engineer with an adjacent toolset (graded 3). Skill overlap counts mentions; it has no notion of depth or years.
+- **It under-ranks adjacent stacks.** A senior Vue engineer (graded 3) lands 5th of 6 for a React posting, below a junior who happens to use React. Transferable skill is exactly what a keyword-and-TF-IDF model can't see.
+- **The one top-1 miss** is a DevOps pool where the top three candidates land within 1.1 points of each other — the model is right that they're close and wrong about the order inside that cluster.
+
+These resumes are written, not scraped, so they're cleaner and more uniform in length than production input. Treat +0.91 as an upper bound; the dataset says so too, in `_about.known_bias`.
 
 ## Repo structure
 
@@ -61,11 +113,13 @@ The one misclassification is printed by the script too — a sales resume scorin
 frontend/          React + TypeScript + Tailwind SPA
 backend/           Node.js + Express + TypeScript REST API, SQLite persistence
   src/modules/     jobs, candidates, scoring — each with routes + service + tests
+  src/db/          schema + in-place migrations, with tests against a legacy database
 ml-service/        Python + FastAPI — resume parsing, skill extraction, scoring
-  evaluation/      the labeled dataset + evaluate.py (produces the numbers above)
-  tests/           pytest unit tests for the scoring/extraction logic
+  evaluation/      both labeled datasets + the two scripts that produce the numbers above
+  tests/           pytest unit tests for scoring, extraction, parsing, and the API
 docker-compose.yml runs all three services together
-.github/workflows/  CI: typecheck + test every service, then build all Docker images
+.github/workflows/ CI: lint + typecheck + test every service, run both evaluations,
+                   then build all Docker images
 ```
 
 ## Running it
@@ -108,18 +162,24 @@ npm run dev           # http://localhost:5173
 
 ## Tests
 
-76 automated tests total, all run on every push via [CI](https://github.com/rahuldabola/resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three Docker images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure, not just asserted.
+**130 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
 
 ```bash
-# ML service: unit tests (skill extraction, scoring, resume parsing) + the FastAPI endpoints
-cd ml-service && python -m pytest tests/ -v              # 24 tests
+# ML service: extraction, disambiguation, negation, scoring, stuffing, endpoints
+cd ml-service && python -m pytest tests/ -v              # 50 tests
 
-# ML service: the accuracy evaluation itself
+# ML service: both evaluations
 cd ml-service && python -m evaluation.evaluate
+cd ml-service && python -m evaluation.evaluate_ranking
 
-# Backend: unit + integration tests (Jest + Supertest, ML service calls mocked)
-cd backend && npm test                                    # 52 tests
+# Backend: unit + integration + schema migration (Jest + Supertest, ML calls mocked)
+cd backend && npm test                                    # 80 tests
+
+# Frontend
+cd frontend && npm run lint && npm run build
 ```
+
+The backend suite includes a migration test that opens a database written by the *previous* schema and asserts the current code migrates it in place — the schema is created with `CREATE TABLE IF NOT EXISTS`, which is a no-op against an existing database, so a rename has to be a real migration.
 
 ## API overview
 
@@ -140,14 +200,19 @@ ML service (called by the backend, not the frontend directly):
 | Method | Route | Purpose |
 |---|---|---|
 | POST | `/parse-resume` | Extract text + skills from an uploaded resume file |
-| POST | `/score` | Compute the match score between resume text and a job description |
+| POST | `/score-batch` | Score a pool of resumes against one job in one TF-IDF fit — what ranking uses |
+| POST | `/score` | Single-pair score; convenient, but see the pool-relative note above |
+
+Ranking writes are wrapped in a transaction: a failure partway through would otherwise leave some candidates scored against the current job description and the rest against whatever it said last time — a ranking that looks complete and isn't.
 
 ## Known limitations
 
-- Skill extraction is keyword/taxonomy-based, not a trained NER model — it's fast, deterministic, and needs no training data, but it will miss skills phrased in ways the taxonomy doesn't cover. Extending it is a one-line addition to `skills_taxonomy.py`.
-- No authentication — this is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS product. The backend does apply a per-IP rate limit (`backend/src/middleware/rateLimiter.ts`, 300 req/15min, skipped only in tests) as a cheap guard against one client burning ML-service CPU — that's abuse mitigation, not access control, and doesn't substitute for real auth.
-- SQLite, not a client-server database — genuinely fine at this scale, but a real deployment serving concurrent recruiters would move to PostgreSQL (the schema is already normalized and would port directly).
-- The 97.8% evaluation number measures same-domain-vs-wrong-domain classification, not ranking quality among in-domain candidates — see the caveat in the evaluation section above.
+- **No seniority or recency model.** The evaluation above shows exactly where this bites: a junior who names the right tools can outrank a senior with an adjacent stack. Extracting years-of-experience per skill is the obvious next step and is not implemented.
+- **Skill extraction is taxonomy-based, not a trained NER model.** The disambiguation and negation handling above cut the false positives, but recall is still bounded by the taxonomy: a skill phrased in a way it doesn't cover is simply missed. Extending it is a one-line addition to `skills_taxonomy.py`.
+- **Keyword-stuffing detection is a density heuristic.** It catches the bare-skills-dump attack cleanly. A more patient adversary who writes plausible prose around fabricated skills defeats it, and nothing here verifies that a claimed skill was ever used.
+- **No authentication.** This is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS. The backend applies a per-IP rate limit (`backend/src/middleware/rateLimiter.ts`, 300 req/15min, skipped in tests) as a cheap guard against one client burning ML-service CPU — that's abuse mitigation, not access control.
+- **SQLite, not a client-server database.** Genuinely fine at this scale; a deployment serving concurrent recruiters would move to PostgreSQL (the schema is already normalized and would port directly).
+- **Both evaluation sets are small and authored.** 45 classification pairs and 24 graded ranking pairs, written for this project. They are enough to catch a regression and to characterize the model's failure modes; they are not enough to claim a production accuracy figure.
 
 ## License
 
