@@ -1,0 +1,81 @@
+{
+  "_about": {
+    "purpose": "Measures ranking quality among candidates who are ALL in the right field. eval_dataset.json only asks 'right field or wrong field', which turns out to be nearly trivially separable; this asks the question a recruiter actually has: given six plausible backend engineers, does the model order them the way a human would?",
+    "grading_rubric": {
+      "5": "Exact stack match, senior. The candidate you would interview first.",
+      "4": "Exact stack match but thinner: mid-level, or missing part of the infrastructure the posting asks for.",
+      "3": "Adjacent stack, strong engineer. Would need to pick up the posting's specific tools.",
+      "2": "Right field, junior, partial overlap with the stack.",
+      "1": "Right field in name only: different stack, little transferable tooling."
+    },
+    "grading_protocol": "Grades were assigned from the rubric above by reading each resume against its job posting, before any model score was computed. They were not adjusted afterwards to improve the reported correlation.",
+    "known_bias": "These are written resumes, not scraped real ones, so they are cleaner and more uniform in length than production input. Treat the reported correlation as an upper bound."
+  },
+
+  "jobs": {
+    "backend_job": "Senior Backend Engineer. You will design and operate REST APIs in Node.js and Express backed by PostgreSQL and Redis. Our services are containerized with Docker, orchestrated on Kubernetes, and deployed to AWS through a GitHub Actions CI/CD pipeline. Strong SQL and a track record owning microservices in production are required.",
+    "frontend_job": "Senior Frontend Engineer. Build and own our customer-facing React application in TypeScript, with Redux for state management and Next.js for server rendering. You will work closely with design on a component library, write semantic HTML and maintainable CSS, and care about accessibility and rendering performance.",
+    "datascience_job": "Data Scientist. Build and evaluate predictive models in Python using scikit-learn, pandas and numpy. You will own the full modelling loop: feature engineering, cross-validation, hyperparameter tuning and honest model evaluation. Strong SQL for pulling your own training data, and some NLP experience, are both expected.",
+    "devops_job": "DevOps Engineer. Own our container platform: Docker images, Kubernetes clusters, and AWS infrastructure. You will build and maintain CI/CD pipelines in Jenkins and GitHub Actions, harden our Linux fleet, and be the person who makes deployments boring. Experience running production databases such as PostgreSQL is a plus."
+  },
+
+  "resumes": {
+    "backend_a": "Senior Backend Engineer, 8 years. Designed and operated a fleet of Node.js and Express microservices serving 40k requests per minute, with PostgreSQL as the system of record and Redis for caching and rate limiting. Containerized every service with Docker and ran them on Kubernetes in AWS. Built the GitHub Actions CI/CD pipeline the whole platform team deploys through. Deep SQL background including query plan tuning and index design.",
+    "backend_b": "Backend Engineer, 4 years. Build REST APIs in Node.js and Express against PostgreSQL, with Redis used for session storage. Comfortable writing and reviewing SQL, and package services as Docker images for the platform team to deploy. Have not run Kubernetes or owned AWS infrastructure directly, but read the pipeline configuration regularly and have contributed CI/CD changes.",
+    "backend_c": "Senior Software Engineer, 9 years, Python. Built and operated Django REST services on PostgreSQL, containerized with Docker and deployed to AWS ECS. Owned a CI/CD pipeline in GitHub Actions and mentored four engineers. Strong SQL and production debugging experience, including a migration that split a monolith into microservices. No professional Node.js experience.",
+    "backend_d": "Backend Developer, 18 months. Write Express endpoints in Node.js for an internal admin tool, backed by PostgreSQL. Comfortable with basic SQL queries and joins. Have used Docker locally by running the compose file the team provided. Learning about microservices and cloud deployment; no production ownership yet.",
+    "backend_e": "Backend Engineer, 6 years, Java. Built transactional services with Spring Boot and MySQL for a payments platform, with heavy emphasis on correctness and testing. Strong SQL. Deployments were handled by a separate operations group using an internal tool; my exposure to containers and cloud platforms is limited to reading the documentation.",
+    "backend_f": "Platform Engineer, 7 years. Built high-throughput microservices in Go, deployed on Kubernetes across AWS regions, with PostgreSQL and Redis behind them. Owned the CI/CD pipeline in GitHub Actions and the Docker base images the org builds on. Strong SQL and distributed systems background. Node.js only in small internal tools.",
+
+    "frontend_a": "Senior Frontend Engineer, 7 years. Own a large React application written entirely in TypeScript, with Redux for state and Next.js for server-side rendering. Built and documented the company component library, drove an accessibility audit to WCAG AA, and cut largest-contentful-paint by 40% through rendering work. Write semantic HTML and maintain the CSS design tokens.",
+    "frontend_b": "Frontend Engineer, 4 years. Build product features in React with TypeScript, styling with Tailwind CSS and semantic HTML. Comfortable with component composition and hooks, and have contributed to a shared design system. State management has been React context rather than Redux, and I have not worked with Next.js in production.",
+    "frontend_c": "Senior Frontend Engineer, 8 years, Vue. Led the frontend of a logistics dashboard built in Vue.js with TypeScript, including a component library used by three teams. Strong CSS and semantic HTML, ran the accessibility workstream, and profiled rendering performance under large data tables. React only in personal projects.",
+    "frontend_d": "Junior Frontend Developer, 1 year. Build React components in JavaScript for a marketing site, writing HTML and CSS from design handoffs. Have used Redux on one internal project by following existing patterns. Learning TypeScript in my own time; no server-side rendering experience.",
+    "frontend_e": "Frontend Developer, 5 years, Angular. Built and maintained an enterprise admin console in Angular with RxJS, backed by a large SCSS codebase and semantic HTML. Comfortable with component architecture and testing. Have not used React, Redux or Next.js professionally.",
+    "frontend_f": "Frontend Engineer, 5 years. Ship features in React with Redux across a consumer product, writing JavaScript rather than TypeScript. Strong CSS and semantic HTML, including a responsive rebuild of the checkout flow. Familiar with Next.js from a side project. Care a lot about accessibility and have run screen-reader testing sessions.",
+
+    "datascience_a": "Data Scientist, 6 years. Build production models in Python with scikit-learn, pandas and numpy, owning the loop end to end: feature engineering, cross-validation, hyperparameter tuning, and model evaluation against a held-out set. Write my own SQL to pull training data from the warehouse. Shipped an NLP classifier that routes inbound support tickets.",
+    "datascience_b": "Data Scientist, 3 years. Train and evaluate models in Python using scikit-learn and pandas, mostly gradient-boosted trees on tabular data. Comfortable with feature engineering and cross-validation. Pull my own data with SQL. Model evaluation has been accuracy and AUC on a holdout split; no NLP work so far.",
+    "datascience_c": "Machine Learning Engineer, 7 years. Deep learning specialist: PyTorch and TensorFlow for natural language processing, including a transformer fine-tuned for document classification. Strong Python and numpy, and rigorous about model evaluation and hyperparameter tuning. Use scikit-learn mainly for baselines. SQL is functional rather than strong.",
+    "datascience_d": "Senior Data Analyst, 6 years. Advanced SQL across a Snowflake warehouse, building the reporting layer the business runs on, plus data analysis and dashboarding. Use Python with pandas for ad hoc work. Have not trained or evaluated predictive models in a production setting.",
+    "datascience_e": "Junior Data Scientist, 1 year. Python with pandas, numpy and scikit-learn from a masters program and one industry internship, where I built a churn model and evaluated it with cross-validation. Basic SQL. Keen to move into owning models end to end.",
+    "datascience_f": "Data Analyst, 4 years. Build reports and dashboards, write SQL for stakeholder questions, and manage the weekly metrics review. Comfortable with spreadsheets and data analysis. Python exposure is limited to a short course; no machine learning experience.",
+
+    "devops_a": "DevOps Engineer, 8 years. Own a Kubernetes platform on AWS: cluster upgrades, autoscaling, and the Docker base images every team builds on. Maintain CI/CD in both Jenkins and GitHub Actions, and run the Linux fleet including kernel tuning and hardening. Operate production PostgreSQL with replication and point-in-time recovery.",
+    "devops_b": "Site Reliability Engineer, 5 years. Run services on Kubernetes in AWS, build and maintain Docker images, and own the GitHub Actions CI/CD pipelines for eight repositories. Strong Linux troubleshooting. PostgreSQL experience is as a consumer rather than an operator, and I have not administered Jenkins.",
+    "devops_c": "Infrastructure Engineer, 7 years, Azure. Built and operated container platforms on Azure Kubernetes Service, with Docker images published through Jenkins pipelines. Deep Linux background including package and configuration management across a few thousand hosts. Ran production PostgreSQL and MySQL. AWS exposure is limited to a migration assessment.",
+    "devops_d": "Build Engineer, 2 years. Maintain Jenkins jobs and GitHub Actions workflows for a Java monolith, and write the Dockerfiles our services build from. Comfortable on Linux day to day. Kubernetes and AWS knowledge is from a certification course rather than production work.",
+    "devops_e": "Systems Administrator, 9 years. Manage on-premise Linux servers, storage and backups, patching, and internal networking for a 600-person company. Strong scripting and troubleshooting. Containers and cloud platforms are on my roadmap; the estate I run today is entirely virtual machines with no CI/CD pipeline.",
+    "devops_f": "Cloud Engineer, 6 years. Provision and operate AWS infrastructure, deploy workloads to Kubernetes, and build container images with Docker. Maintain CI/CD pipelines in GitHub Actions and a legacy Jenkins server. Solid Linux administration. Have supported PostgreSQL instances alongside the application teams that own them."
+  },
+
+  "graded_pairs": [
+    { "job": "backend_job", "resume": "backend_a", "grade": 5 },
+    { "job": "backend_job", "resume": "backend_b", "grade": 4 },
+    { "job": "backend_job", "resume": "backend_c", "grade": 3 },
+    { "job": "backend_job", "resume": "backend_d", "grade": 2 },
+    { "job": "backend_job", "resume": "backend_e", "grade": 1 },
+    { "job": "backend_job", "resume": "backend_f", "grade": 3 },
+
+    { "job": "frontend_job", "resume": "frontend_a", "grade": 5 },
+    { "job": "frontend_job", "resume": "frontend_b", "grade": 4 },
+    { "job": "frontend_job", "resume": "frontend_c", "grade": 3 },
+    { "job": "frontend_job", "resume": "frontend_d", "grade": 2 },
+    { "job": "frontend_job", "resume": "frontend_e", "grade": 1 },
+    { "job": "frontend_job", "resume": "frontend_f", "grade": 4 },
+
+    { "job": "datascience_job", "resume": "datascience_a", "grade": 5 },
+    { "job": "datascience_job", "resume": "datascience_b", "grade": 4 },
+    { "job": "datascience_job", "resume": "datascience_c", "grade": 3 },
+    { "job": "datascience_job", "resume": "datascience_d", "grade": 2 },
+    { "job": "datascience_job", "resume": "datascience_e", "grade": 2 },
+    { "job": "datascience_job", "resume": "datascience_f", "grade": 1 },
+
+    { "job": "devops_job", "resume": "devops_a", "grade": 5 },
+    { "job": "devops_job", "resume": "devops_b", "grade": 4 },
+    { "job": "devops_job", "resume": "devops_c", "grade": 3 },
+    { "job": "devops_job", "resume": "devops_d", "grade": 2 },
+    { "job": "devops_job", "resume": "devops_e", "grade": 1 },
+    { "job": "devops_job", "resume": "devops_f", "grade": 4 }
+  ]
+}
