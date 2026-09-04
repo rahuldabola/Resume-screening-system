@@ -9,7 +9,12 @@
       "1": "Right field in name only: different stack, little transferable tooling."
     },
     "grading_protocol": "Grades were assigned from the rubric above by reading each resume against its job posting, before any model score was computed. They were not adjusted afterwards to improve the reported correlation.",
-    "known_bias": "These are written resumes, not scraped real ones, so they are cleaner and more uniform in length than production input. Treat the reported correlation as an upper bound."
+    "known_bias": "Two limits, and the second is the one that matters. (1) These are written resumes, not scraped real ones, so they are cleaner and more uniform in length than production input. (2) They were written by the same author who knew how the scorer works. The grades were assigned blind to the model's output, but the resumes themselves were not authored blind to the model's design, so this is not an independent benchmark. It is strong enough to catch a regression and to characterize the failure modes below; it is not strong enough to quote as a production ranking accuracy. Replacing these with resumes the author did not write is the single highest-value improvement available to this project.",
+    "observed_failure_modes": [
+      "No notion of seniority: a junior who names the right tools outranks a senior with an adjacent stack.",
+      "Under-ranks transferable experience: a senior Vue engineer places 5th of 6 for a React posting.",
+      "Ties inside a tight cluster are ordered arbitrarily: the DevOps top three land within 1.1 points."
+    ]
   },
 
   "jobs": {

@@ -105,7 +105,7 @@ Spearman is the headline: +0.91 means the model's ordering closely tracks the hu
 - **It under-ranks adjacent stacks.** A senior Vue engineer (graded 3) lands 5th of 6 for a React posting, below a junior who happens to use React. Transferable skill is exactly what a keyword-and-TF-IDF model can't see.
 - **The one top-1 miss** is a DevOps pool where the top three candidates land within 1.1 points of each other — the model is right that they're close and wrong about the order inside that cluster.
 
-These resumes are written, not scraped, so they're cleaner and more uniform in length than production input. Treat +0.91 as an upper bound; the dataset says so too, in `_about.known_bias`.
+**What this number is not.** These resumes were written for this project, by the same author who knew how the scorer works. The grades were assigned blind to the model's output — but the resumes were not authored blind to the model's design, so this is **not an independent benchmark**, and +0.91 should be read as an upper bound rather than an expected production figure. It is strong enough to catch a regression and to characterize the failure modes above, which is what it is used for here. Re-running this evaluation against resumes the author did not write is the single highest-value improvement available to this project, and it is not done.
 
 ## Repo structure
 
@@ -212,7 +212,14 @@ Ranking writes are wrapped in a transaction: a failure partway through would oth
 - **Keyword-stuffing detection is a density heuristic.** It catches the bare-skills-dump attack cleanly. A more patient adversary who writes plausible prose around fabricated skills defeats it, and nothing here verifies that a claimed skill was ever used.
 - **No authentication.** This is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS. The backend applies a per-IP rate limit (`backend/src/middleware/rateLimiter.ts`, 300 req/15min, skipped in tests) as a cheap guard against one client burning ML-service CPU — that's abuse mitigation, not access control.
 - **SQLite, not a client-server database.** Genuinely fine at this scale; a deployment serving concurrent recruiters would move to PostgreSQL (the schema is already normalized and would port directly).
-- **Both evaluation sets are small and authored.** 45 classification pairs and 24 graded ranking pairs, written for this project. They are enough to catch a regression and to characterize the model's failure modes; they are not enough to claim a production accuracy figure.
+- **Both evaluation sets are small and author-written.** 45 classification pairs and 24 graded ranking pairs, written for this project by the same author who wrote the scorer. Enough to catch a regression and to characterize the failure modes; not enough to claim a production accuracy figure.
+
+## What I would do next
+
+Named because they are the honest gaps, not because they are polish. Neither is implemented.
+
+1. **Evaluate against resumes I did not write.** 40–60 resumes from a public dataset or anonymized real ones, graded by someone other than the model's author. This is what converts +0.91 from suggestive into evidence, and it is the highest-value change available.
+2. **Add sentence embeddings as a third signal.** A `sentence-transformers` encoder scoring resume/job semantic similarity alongside skill overlap and TF-IDF, aimed squarely at the "under-ranks adjacent stacks" failure the ranking evaluation already documents. The benchmark is in place to show whether it actually beats TF-IDF — including if it doesn't.
 
 ## License
 
