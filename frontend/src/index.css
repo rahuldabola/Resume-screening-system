@@ -2,6 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-50 text-slate-900;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-canvas text-ink-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* One focus treatment for every control, so keyboard users get the same
+     affordance on a link, a button and a file dropzone. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-ink-900/[0.07] bg-white shadow-card;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-ink-900/10 bg-white px-3.5 py-2.5 text-sm text-ink-900
+           placeholder:text-ink-300 transition-colors focus:border-brand-500 focus:outline-none
+           focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-700;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition-all disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-ink-900 text-white shadow-card hover:bg-ink-700 active:scale-[0.985];
+  }
+
+  .btn-ghost {
+    @apply btn border border-ink-900/10 bg-white text-ink-700 hover:border-ink-900/20 hover:bg-ink-900/[0.03];
+  }
+
+  /* Numbers that change in place (scores, counts) shift the layout unless the
+     digits are the same width. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
 }

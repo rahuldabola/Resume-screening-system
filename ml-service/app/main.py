@@ -1,7 +1,8 @@
+import hmac
 import os
 from dataclasses import asdict
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import (
@@ -38,12 +39,34 @@ app.add_middleware(
 )
 
 
+def require_service_token(x_service_token: str | None = Header(default=None)) -> None:
+    """Reject anyone who is not the backend.
+
+    CORS is not a defence here: it is enforced by browsers, and this service is
+    called server to server. When the two services can only reach each other
+    over the public internet (the deployed topology), a shared secret is what
+    actually keeps a stranger from spending this service's CPU on their own
+    resumes.
+
+    Unset SERVICE_TOKEN leaves the endpoints open, which is what docker-compose
+    and the test suite want: there, the service is only reachable from inside
+    the compose network or the test process.
+    """
+    expected = os.getenv("SERVICE_TOKEN", "")
+    if not expected:
+        return
+
+    # Constant-time: a plain == leaks how much of the token is right via timing.
+    if not x_service_token or not hmac.compare_digest(x_service_token, expected):
+        raise HTTPException(status_code=401, detail="Invalid or missing service token.")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
-@app.post("/score", response_model=ScoreResponse)
+@app.post("/score", response_model=ScoreResponse, dependencies=[Depends(require_service_token)])
 def score(payload: ScoreRequest):
     """Score one resume against one job.
 
@@ -57,7 +80,7 @@ def score(payload: ScoreRequest):
     return asdict(compute_match(payload.resume_text, payload.job_description))
 
 
-@app.post("/score-batch", response_model=ScoreBatchResponse)
+@app.post("/score-batch", response_model=ScoreBatchResponse, dependencies=[Depends(require_service_token)])
 def score_batch(payload: ScoreBatchRequest):
     """Score a pool of resumes against one job in a single pass.
 
@@ -80,7 +103,7 @@ def score_batch(payload: ScoreBatchRequest):
     )
 
 
-@app.post("/parse-resume", response_model=ParseResumeResponse)
+@app.post("/parse-resume", response_model=ParseResumeResponse, dependencies=[Depends(require_service_token)])
 async def parse_resume(file: UploadFile = File(...)):
     content = await file.read()
     if not content:

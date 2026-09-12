@@ -18,6 +18,13 @@ export function parseOrigins(raw: string | undefined): string[] {
 export const env = {
   port: Number(process.env.PORT) || 4000,
   mlServiceUrl: process.env.ML_SERVICE_URL || 'http://localhost:8000',
+  // A hung ML call would otherwise hold the request open indefinitely. Generous
+  // by design: a cold container installing nothing but still importing sklearn
+  // takes a few seconds on its first request.
+  mlServiceTimeoutMs: Number(process.env.ML_SERVICE_TIMEOUT_MS) || 60_000,
+  // Shared secret the ML service checks. Empty locally and under compose, where
+  // the ML service is not reachable from outside the network it runs in.
+  mlServiceToken: process.env.ML_SERVICE_TOKEN || '',
   clientOrigins: parseOrigins(process.env.CLIENT_ORIGIN),
   // Behind a platform proxy (Railway, Render, Fly) every request arrives from
   // the proxy's address, so a per-IP rate limit keyed on it would throttle all

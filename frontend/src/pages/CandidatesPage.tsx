@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { apiErrorMessage } from '../api/client';
 import { deleteCandidate, listCandidates, uploadCandidate } from '../api/candidates';
 import { parseSkills } from '../api/types';
 import type { Candidate } from '../api/types';
+import { FileDrop } from '../components/FileDrop';
 import { SkillPills } from '../components/SkillPills';
+import { EmptyState, ErrorNote, SkeletonList, Spinner } from '../components/Ui';
 
 export function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Split so the mount effect doesn't call setLoading synchronously: `loading`
   // already starts true, and a synchronous setState inside an effect just
@@ -42,7 +44,7 @@ export function CandidatesPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!file) {
-      setError('Please choose a resume file (.pdf, .docx, or .txt).');
+      setError('Choose a resume file first (.pdf, .docx or .txt).');
       return;
     }
     setError(null);
@@ -52,7 +54,6 @@ export function CandidatesPage() {
       setName('');
       setEmail('');
       setFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
       await refresh();
     } catch (err) {
       setError(apiErrorMessage(err));
@@ -70,80 +71,160 @@ export function CandidatesPage() {
     }
   }
 
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">Candidates</h1>
+  // Searching the extracted skills, not just the name: "who here knows Kubernetes"
+  // is the question a recruiter actually arrives with.
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return candidates;
+    return candidates.filter((candidate) => {
+      const haystack = [candidate.name, candidate.email ?? '', ...parseSkills(candidate.extracted_skills)];
+      return haystack.some((value) => value.toLowerCase().includes(needle));
+    });
+  }, [candidates, query]);
 
-      <form onSubmit={handleSubmit} className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Upload a resume</h2>
-        <div className="mb-3 grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Name</label>
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10">
+      <h1 className="text-2xl font-bold tracking-tight text-ink-900 sm:text-3xl">Candidates</h1>
+      <p className="mt-1.5 text-sm text-ink-500">
+        Resumes are parsed on upload, and their skills are extracted before any job is scored.
+      </p>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:items-start">
+        <form onSubmit={handleSubmit} className="card p-5 lg:sticky lg:top-20">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-300">Upload a resume</h2>
+
+          <div className="mt-4">
+            <label className="label" htmlFor="candidate-name">Name</label>
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              id="candidate-name"
+              className="field"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder="Priya Sharma"
               required
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Email (optional)</label>
+
+          <div className="mt-4">
+            <label className="label" htmlFor="candidate-email">
+              Email <span className="font-normal text-ink-300">optional</span>
+            </label>
             <input
+              id="candidate-email"
               type="email"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              className="field"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="priya@example.com"
             />
           </div>
-        </div>
-        <div className="mb-4">
-          <label className="mb-1 block text-sm font-medium text-slate-700">Resume file (.pdf, .docx, .txt)</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx,.txt"
-            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-700"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-        </div>
-        {error && <p className="mb-3 text-sm text-rose-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
-        >
-          {submitting ? 'Uploading & parsing...' : 'Upload Resume'}
-        </button>
-      </form>
 
-      {loading ? (
-        <p className="text-sm text-slate-500">Loading candidates...</p>
-      ) : candidates.length === 0 ? (
-        <p className="text-sm text-slate-500">No candidates yet — upload a resume above.</p>
-      ) : (
-        <ul className="space-y-3">
-          {candidates.map((candidate) => (
-            <li key={candidate.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-900">{candidate.name}</p>
-                  {candidate.email && <p className="text-sm text-slate-500">{candidate.email}</p>}
-                  <p className="mt-1 text-xs text-slate-400">{candidate.resume_filename}</p>
-                  <div className="mt-2">
-                    <SkillPills skills={parseSkills(candidate.extracted_skills)} tone="neutral" />
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleDelete(candidate.id)}
-                  className="shrink-0 text-xs font-medium text-rose-600 hover:underline"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+          <div className="mt-4">
+            <span className="label">Resume file</span>
+            <FileDrop file={file} onSelect={setFile} accept=".pdf,.docx,.txt" />
+          </div>
+
+          <button type="submit" disabled={submitting} className="btn-primary mt-5 w-full">
+            {submitting && <Spinner />}
+            {submitting ? 'Parsing resume…' : 'Upload resume'}
+          </button>
+
+          {error && (
+            <div className="mt-4">
+              <ErrorNote message={error} onDismiss={() => setError(null)} />
+            </div>
+          )}
+        </form>
+
+        <div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-ink-500">
+              <span className="tnum font-semibold text-ink-900">{candidates.length}</span> in the pool
+              {query && visible.length !== candidates.length && (
+                <span className="tnum"> · {visible.length} matching</span>
+              )}
+            </p>
+            <div className="relative w-full sm:w-64">
+              <svg
+                viewBox="0 0 16 16"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M7 1a6 6 0 1 0 3.7 10.7l3.3 3.3a.75.75 0 0 0 1-1l-3.3-3.3A6 6 0 0 0 7 1Zm0 1.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" />
+              </svg>
+              <input
+                className="field pl-9"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search name, email or skill"
+                aria-label="Search candidates"
+              />
+            </div>
+          </div>
+
+          {loading ? (
+            <SkeletonList />
+          ) : candidates.length === 0 ? (
+            <EmptyState
+              title="No candidates yet"
+              body="Upload a PDF, DOCX or TXT resume. Its text is extracted and its skills identified straight away."
+              icon={
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 9.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM18 8v6m3-3h-6" />
+                </svg>
+              }
+            />
+          ) : visible.length === 0 ? (
+            <EmptyState
+              title="No match"
+              body={`Nobody in the pool matches "${query}".`}
+              icon={
+                <svg viewBox="0 0 16 16" className="h-6 w-6" fill="currentColor" aria-hidden="true">
+                  <path d="M7 1a6 6 0 1 0 3.7 10.7l3.3 3.3a.75.75 0 0 0 1-1l-3.3-3.3A6 6 0 0 0 7 1Zm0 1.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" />
+                </svg>
+              }
+            />
+          ) : (
+            <ul className="space-y-3">
+              {visible.map((candidate) => {
+                const skills = parseSkills(candidate.extracted_skills);
+                return (
+                  <li key={candidate.id} className="card p-4 transition-shadow hover:shadow-lift sm:p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-ink-900">{candidate.name}</p>
+                        {candidate.email && <p className="text-sm text-ink-500">{candidate.email}</p>}
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-300">
+                          <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+                            <path d="M4 2.5A1.5 1.5 0 0 1 5.5 1h5.9L16 5.6v11.9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 17.5v-15Zm7.5 0V6H15l-3.5-3.5Z" />
+                          </svg>
+                          {candidate.resume_filename}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDelete(candidate.id)}
+                        aria-label={`Delete ${candidate.name}`}
+                        className="shrink-0 rounded-lg p-2 text-ink-300 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                          <path d="M8 2h4a1 1 0 0 1 1 1v1h4v2H3V4h4V3a1 1 0 0 1 1-1Zm-3 6h10l-.8 9.1a1 1 0 0 1-1 .9H6.8a1 1 0 0 1-1-.9L5 8Z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="mt-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-300">
+                        Extracted skills · {skills.length}
+                      </p>
+                      <SkillPills skills={skills} tone="neutral" limit={12} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

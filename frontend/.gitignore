@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Vercel CLI project link and the OIDC token it downloads
+.vercel
+.env
+.env.local
+.env.*.local

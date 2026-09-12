@@ -37,9 +37,46 @@ describe('mlServiceClient', () => {
       await expect(scoreMatch('', 'job text')).rejects.toThrow(/ML service error/);
     });
 
-    it('throws when the ML service is unreachable', async () => {
+    it('reports an unreachable ML service as a 503, not an opaque 500', async () => {
       jest.spyOn(global, 'fetch').mockRejectedValue(new Error('fetch failed'));
-      await expect(scoreMatch('resume', 'job')).rejects.toThrow('fetch failed');
+
+      await expect(scoreMatch('resume', 'job')).rejects.toMatchObject({
+        statusCode: 503,
+        message: expect.stringContaining('unreachable'),
+      });
+    });
+
+    it('reports a hung ML service as a 504', async () => {
+      const timeout = new Error('The operation was aborted due to timeout');
+      timeout.name = 'TimeoutError';
+      jest.spyOn(global, 'fetch').mockRejectedValue(timeout);
+
+      await expect(scoreMatch('resume', 'job')).rejects.toMatchObject({
+        statusCode: 504,
+        message: expect.stringContaining('timed out'),
+      });
+    });
+
+    it('sends no service token when none is configured', async () => {
+      const fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(fakeResponse({ match_score: 0 }));
+
+      await scoreMatch('resume', 'job');
+
+      const headers = (fetchSpy.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+      expect(headers['X-Service-Token']).toBeUndefined();
+    });
+
+    it('aborts the request rather than waiting on the ML service forever', async () => {
+      const fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(fakeResponse({ match_score: 0 }));
+
+      await scoreMatch('resume', 'job');
+
+      const init = fetchSpy.mock.calls[0][1] as RequestInit;
+      expect(init.signal).toBeInstanceOf(AbortSignal);
     });
   });
 

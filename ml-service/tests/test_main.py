@@ -149,3 +149,71 @@ def test_parse_resume_endpoint_rejects_whitespace_only_file():
         files={"file": ("resume.txt", b"   \n\n   ", "text/plain")},
     )
     assert res.status_code == 422
+
+
+def test_endpoints_are_open_when_no_service_token_is_configured():
+    """Unset SERVICE_TOKEN is the docker-compose and local-dev case."""
+    res = client.post("/score", json={
+        "resume_text": "Python and scikit-learn experience.",
+        "job_description": "Hiring a data scientist who knows Python.",
+    })
+    assert res.status_code == 200
+
+
+def test_service_token_is_required_once_configured(monkeypatch):
+    monkeypatch.setenv("SERVICE_TOKEN", "s3cret")
+
+    res = client.post("/score", json={
+        "resume_text": "Python and scikit-learn experience.",
+        "job_description": "Hiring a data scientist who knows Python.",
+    })
+    assert res.status_code == 401
+    assert "token" in res.json()["detail"].lower()
+
+
+def test_a_wrong_service_token_is_rejected(monkeypatch):
+    monkeypatch.setenv("SERVICE_TOKEN", "s3cret")
+
+    res = client.post(
+        "/score",
+        headers={"X-Service-Token": "not-the-token"},
+        json={
+            "resume_text": "Python and scikit-learn experience.",
+            "job_description": "Hiring a data scientist who knows Python.",
+        },
+    )
+    assert res.status_code == 401
+
+
+def test_the_right_service_token_is_accepted(monkeypatch):
+    monkeypatch.setenv("SERVICE_TOKEN", "s3cret")
+
+    res = client.post(
+        "/score",
+        headers={"X-Service-Token": "s3cret"},
+        json={
+            "resume_text": "Python and scikit-learn experience.",
+            "job_description": "Hiring a data scientist who knows Python.",
+        },
+    )
+    assert res.status_code == 200
+
+
+def test_every_working_endpoint_is_guarded_not_just_score(monkeypatch):
+    monkeypatch.setenv("SERVICE_TOKEN", "s3cret")
+
+    batch = client.post("/score-batch", json={
+        "resumes": [{"id": 1, "text": "Python engineer."}],
+        "job_description": "Hiring a Python engineer.",
+    })
+    parse = client.post("/parse-resume", files={"file": ("resume.txt", b"Python engineer.", "text/plain")})
+
+    assert batch.status_code == 401
+    assert parse.status_code == 401
+
+
+def test_health_stays_open_for_platform_probes(monkeypatch):
+    """A platform healthcheck has no way to send the shared secret."""
+    monkeypatch.setenv("SERVICE_TOKEN", "s3cret")
+
+    assert client.get("/health").status_code == 200

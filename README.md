@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml/badge.svg)](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml)
 
+**Live demo → [screensmart.vercel.app](https://screensmart.vercel.app)**
+
 An end-to-end recruitment platform: post a job, upload resumes, and get candidates automatically ranked by how well they match — with a transparent score breakdown, not a black-box number.
 
 **Stack:** React 19 + TypeScript · Node.js + Express + TypeScript · Python + FastAPI + scikit-learn · SQLite · Docker
@@ -160,20 +162,76 @@ npm install
 npm run dev           # http://localhost:5173
 ```
 
+## Deployment
+
+The live demo runs the same three services, split across two platforms:
+
+```
+screensmart.vercel.app          backend-production-36da        ml-service-production-7fb2
+  Vercel (static build)  ──────▶  .up.railway.app        ──────▶  .up.railway.app
+  VITE_API_URL baked in           Railway (Docker)                 Railway (Docker)
+  at build time                   + 1GB volume for SQLite          X-Service-Token required
+```
+
+**Why the ML service is on a public URL and not Railway's private network.** Private
+networking there is IPv6-only, so a service has to bind `::` to be reachable by a
+sibling. Python's `asyncio` sets `IPV6_V6ONLY` on that socket, which hides the port
+from Railway's port detection, and the deployment never leaves `DEPLOYING` — the
+container is up and serving the whole time. Binding `0.0.0.0` and going over the
+public edge is what actually works. That makes a stranger's `POST /score-batch` free
+ML CPU, so the service requires a shared secret (`SERVICE_TOKEN`) on every working
+endpoint; `/health` stays open because a platform probe has no way to send it. Leave
+`SERVICE_TOKEN` unset locally and under Compose, where nothing outside the network
+can reach the service anyway.
+
+**Environment variables**
+
+| Service | Variable | Deployed value | Why |
+|---|---|---|---|
+| backend | `ML_SERVICE_URL` | the ML service's public URL | who to score against |
+| backend | `ML_SERVICE_TOKEN` | shared secret | sent as `X-Service-Token` |
+| backend | `CLIENT_ORIGIN` | `https://screensmart.vercel.app,…` | CORS allowlist, comma-separated |
+| backend | `DATABASE_PATH` | `/app/data/screening.db` | on the mounted volume, so a redeploy keeps the data |
+| backend | `TRUST_PROXY` | `true` | rate-limit on the real client IP, not the proxy's |
+| ml-service | `SERVICE_TOKEN` | shared secret | rejects everyone who isn't the backend |
+| ml-service | `ALLOWED_ORIGINS` | the backend's URL | CORS, belt and braces |
+| ml-service | `HOST` / `PORT` | `0.0.0.0` / `8000` | platform-assigned bind |
+| frontend | `VITE_API_URL` | the backend's `/api` URL | baked in at build time, not read at runtime |
+
+`VITE_API_URL` is a build-time substitution: changing the backend URL means rebuilding
+the frontend, not restarting it.
+
+**Reproducing it**
+
+```bash
+# Railway — one project, two services, each built from its own Dockerfile
+railway init --name resume-screening
+railway add -s ml-service && railway add -s backend      # then set each root directory
+railway up -s ml-service
+railway up -s backend
+
+# Vercel — from frontend/, with the backend URL baked into the build
+vercel deploy --prod -b VITE_API_URL=https://<backend-host>/api
+```
+
+Deployed state persists on the Railway volume mounted at `/app/data`. Rotating the
+shared secret means setting `SERVICE_TOKEN` and `ML_SERVICE_TOKEN` to the same new
+value and redeploying both services.
+
 ## Tests
 
-**130 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
+**148 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
 
 ```bash
 # ML service: extraction, disambiguation, negation, scoring, stuffing, endpoints
-cd ml-service && python -m pytest tests/ -v              # 50 tests
+cd ml-service && python -m pytest tests/ -v              # 56 tests
 
 # ML service: both evaluations
 cd ml-service && python -m evaluation.evaluate
 cd ml-service && python -m evaluation.evaluate_ranking
 
 # Backend: unit + integration + schema migration (Jest + Supertest, ML calls mocked)
-cd backend && npm test                                    # 80 tests
+cd backend && npm test                                    # 92 tests
 
 # Frontend
 cd frontend && npm run lint && npm run build
@@ -210,7 +268,7 @@ Ranking writes are wrapped in a transaction: a failure partway through would oth
 - **No seniority or recency model.** The evaluation above shows exactly where this bites: a junior who names the right tools can outrank a senior with an adjacent stack. Extracting years-of-experience per skill is the obvious next step and is not implemented.
 - **Skill extraction is taxonomy-based, not a trained NER model.** The disambiguation and negation handling above cut the false positives, but recall is still bounded by the taxonomy: a skill phrased in a way it doesn't cover is simply missed. Extending it is a one-line addition to `skills_taxonomy.py`.
 - **Keyword-stuffing detection is a density heuristic.** It catches the bare-skills-dump attack cleanly. A more patient adversary who writes plausible prose around fabricated skills defeats it, and nothing here verifies that a claimed skill was ever used.
-- **No authentication.** This is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS. The backend applies a per-IP rate limit (`backend/src/middleware/rateLimiter.ts`, 300 req/15min, skipped in tests) as a cheap guard against one client burning ML-service CPU — that's abuse mitigation, not access control.
+- **No user authentication.** This is a single-tenant demo of the matching pipeline, not a multi-recruiter SaaS: anyone with the URL sees the same jobs and candidates. The backend applies a per-IP rate limit (`backend/src/middleware/rateLimiter.ts`, 300 req/15min, skipped in tests) as a cheap guard against one client burning ML-service CPU — that's abuse mitigation, not access control. The ML service *is* authenticated, because deployed it sits on a public URL: it rejects any request without the shared `SERVICE_TOKEN` the backend sends (see Deployment).
 - **SQLite, not a client-server database.** Genuinely fine at this scale; a deployment serving concurrent recruiters would move to PostgreSQL (the schema is already normalized and would port directly).
 - **Both evaluation sets are small and author-written.** 45 classification pairs and 24 graded ranking pairs, written for this project by the same author who wrote the scorer. Enough to catch a regression and to characterize the failure modes; not enough to claim a production accuracy figure.
 
