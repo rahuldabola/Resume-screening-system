@@ -17,11 +17,25 @@
   :focus-visible {
     @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas;
   }
+
+  /* The blanket rule. Individual components also check the media query in JS
+     for the effects they drive from pointer and scroll position, but anything
+     purely declarative is stopped here, once. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-ink-900/[0.07] bg-white shadow-card;
+    @apply rounded-2xl border border-ink-900/[0.07] bg-white/85 shadow-card backdrop-blur-sm;
   }
 
   .field {
@@ -36,20 +50,66 @@
 
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
-           transition-all disabled:cursor-not-allowed disabled:opacity-60;
+           transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-primary {
-    @apply btn bg-ink-900 text-white shadow-card hover:bg-ink-700 active:scale-[0.985];
+    @apply btn bg-ink-900 text-white shadow-card hover:-translate-y-0.5 hover:bg-ink-700 hover:shadow-lift
+           active:translate-y-0 active:scale-[0.98];
+  }
+
+  .btn-accent {
+    @apply btn bg-gradient-to-r from-brand-600 to-purple-600 text-white shadow-card
+           hover:-translate-y-0.5 hover:shadow-glow active:translate-y-0 active:scale-[0.98];
   }
 
   .btn-ghost {
-    @apply btn border border-ink-900/10 bg-white text-ink-700 hover:border-ink-900/20 hover:bg-ink-900/[0.03];
+    @apply btn border border-ink-900/10 bg-white/80 text-ink-700 hover:-translate-y-0.5
+           hover:border-ink-900/20 hover:bg-white active:translate-y-0;
   }
 
   /* Numbers that change in place (scores, counts) shift the layout unless the
      digits are the same width. */
   .tnum {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Text filled with a moving gradient. One use only: the hero headline. */
+  .text-sweep {
+    @apply bg-gradient-to-r from-brand-300 via-white to-brand-200 bg-clip-text text-transparent;
+    background-size: 200% 100%;
+  }
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(11, 16, 32, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(11, 16, 32, 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+
+  .bg-grid-light {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  /* Opens a collapsed panel by animating its own measured height, so the
+     content never has to be given a fixed one. */
+  .expand-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .expand-panel[data-open='true'] {
+    grid-template-rows: 1fr;
+  }
+
+  .expand-panel > * {
+    overflow: hidden;
   }
 }

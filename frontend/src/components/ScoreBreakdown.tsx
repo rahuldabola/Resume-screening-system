@@ -1,6 +1,7 @@
+import type { CSSProperties } from 'react';
 import type { AssessmentResult } from '../api/types';
-import { SkillPills } from './SkillPills';
 import { parseSkills } from '../api/types';
+import { SkillPills } from './SkillPills';
 
 interface ScoreBreakdownProps {
   result: AssessmentResult;
@@ -15,9 +16,12 @@ interface SignalBarProps {
   weight: number;
   hint: string;
   color: string;
+  delay: number;
 }
 
-function SignalBar({ label, value, weight, hint, color }: SignalBarProps) {
+function SignalBar({ label, value, weight, hint, color, delay }: SignalBarProps) {
+  const width = `${Math.max(0, Math.min(100, value))}%`;
+
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
@@ -27,9 +31,11 @@ function SignalBar({ label, value, weight, hint, color }: SignalBarProps) {
         <p className="tnum text-sm font-semibold text-ink-900">{value}%</p>
       </div>
       <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink-900/[0.06]">
+        {/* The keyframe animates to --target-w, so the bar still ends at the
+            right width when motion is reduced and the animation is skipped. */}
         <div
-          className={`h-full rounded-full ${color}`}
-          style={{ width: `${Math.max(0, Math.min(100, value))}%`, transition: 'width 700ms cubic-bezier(0.22,1,0.36,1)' }}
+          className={`h-full rounded-full motion-safe:animate-fill-bar ${color}`}
+          style={{ width, '--target-w': width, animationDelay: `${delay}ms` } as CSSProperties}
         />
       </div>
       <p className="mt-1.5 text-xs leading-relaxed text-ink-500">{hint}</p>
@@ -42,7 +48,9 @@ function SignalBar({ label, value, weight, hint, color }: SignalBarProps) {
  *
  * The whole argument of this project is that a ranking nobody can interrogate
  * is not usable for hiring, so the two signals, their weights and any stuffing
- * penalty are all on screen rather than folded into one opaque number.
+ * penalty are all on screen rather than folded into one opaque number. The bars
+ * fill from zero each time the panel opens — the caller remounts this by key —
+ * which makes their relative lengths the first thing you read.
  */
 export function ScoreBreakdown({ result }: ScoreBreakdownProps) {
   const matched = parseSkills(result.matched_skills);
@@ -56,14 +64,16 @@ export function ScoreBreakdown({ result }: ScoreBreakdownProps) {
           label="Skill overlap"
           value={result.skill_overlap_score}
           weight={SKILL_WEIGHT}
-          color="bg-brand-500"
+          color="bg-gradient-to-r from-brand-600 to-brand-400"
+          delay={60}
           hint={`${matched.length} of ${matched.length + missing.length} skills this job asks for appear in the resume.`}
         />
         <SignalBar
           label="Text similarity"
           value={result.tfidf_similarity}
           weight={TFIDF_WEIGHT}
-          color="bg-brand-300"
+          color="bg-gradient-to-r from-brand-400 to-brand-200"
+          delay={180}
           hint="TF-IDF cosine similarity, fit across this job's whole candidate pool so it is comparable between candidates."
         />
         {damped && (
@@ -83,13 +93,13 @@ export function ScoreBreakdown({ result }: ScoreBreakdownProps) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-300">
             Matched skills · {matched.length}
           </p>
-          <SkillPills skills={matched} tone="positive" />
+          <SkillPills skills={matched} tone="positive" stagger />
         </div>
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-300">
             Missing skills · {missing.length}
           </p>
-          <SkillPills skills={missing} tone="negative" />
+          <SkillPills skills={missing} tone="negative" stagger />
         </div>
       </div>
     </div>
