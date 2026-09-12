@@ -116,6 +116,7 @@ frontend/          React + TypeScript + Tailwind SPA
 backend/           Node.js + Express + TypeScript REST API, SQLite persistence
   src/modules/     jobs, candidates, scoring — each with routes + service + tests
   src/db/          schema + in-place migrations, with tests against a legacy database
+scripts/           smoke_test.py — end-to-end checks against a live deployment
 ml-service/        Python + FastAPI — resume parsing, skill extraction, scoring
   evaluation/      both labeled datasets + the two scripts that produce the numbers above
   tests/           pytest unit tests for scoring, extraction, parsing, and the API
@@ -244,6 +245,27 @@ cd backend && npm test                                    # 92 tests
 # Frontend
 cd frontend && npm run lint && npm run build
 ```
+
+### Smoke test against a running deployment
+
+The suites above mock the ML service and never leave the machine, so none of them
+can catch a wrong environment variable, an expired service token, a CORS allowlist
+that omits the frontend, or a container that is up but unreachable. This one talks
+to the real deployment over the real network:
+
+```bash
+export ML_SERVICE_TOKEN=...            # same value the ML service runs with
+python scripts/smoke_test.py           # 44 checks, ~25s
+```
+
+It checks the claims this README makes rather than only that endpoints answer: that
+"go above and beyond to express our value" yields no Go and no Express, that "Never
+used Docker. Kubernetes in production" credits Kubernetes and not Docker, that a
+keyword dump is damped below a genuine resume that names fewer skills, and that the
+same pair really does score differently in a pool of 2 than in a pool of 5. It
+creates its own jobs and candidates and deletes them afterwards, touching nothing
+it did not create. Point it elsewhere with `API_URL`, `ML_URL` and `CLIENT_ORIGIN`,
+including at docker-compose on localhost.
 
 The backend suite includes a migration test that opens a database written by the *previous* schema and asserts the current code migrates it in place — the schema is created with `CREATE TABLE IF NOT EXISTS`, which is a no-op against an existing database, so a rename has to be a real migration.
 
