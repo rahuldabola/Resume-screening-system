@@ -13,31 +13,37 @@ export interface ScoreBand {
   text: string;
   /** Background + text for a pill. */
   pill: string;
-  /** Stroke colour for the SVG ring. */
+  /** Stroke colour for the SVG ring, per theme. The light-theme green and
+   *  red are picked for contrast against white and go muddy on a dark
+   *  surface, so dark gets the lighter 400 weight of the same hue. */
   stroke: string;
+  strokeDark: string;
 }
 
 export function bandFor(score: number): ScoreBand {
   if (score >= 70) {
     return {
       label: 'Strong match',
-      text: 'text-emerald-600',
-      pill: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20',
+      text: 'text-emerald-600 dark:text-emerald-400',
+      pill: 'tone-positive ring-1 ring-inset',
       stroke: '#059669',
+      strokeDark: '#34d399',
     };
   }
   if (score >= 40) {
     return {
       label: 'Moderate match',
-      text: 'text-amber-600',
-      pill: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20',
+      text: 'text-amber-600 dark:text-amber-400',
+      pill: 'tone-warning ring-1 ring-inset',
       stroke: '#d97706',
+      strokeDark: '#fbbf24',
     };
   }
   return {
     label: 'Weak match',
-    text: 'text-rose-600',
-    pill: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20',
+    text: 'text-rose-600 dark:text-rose-400',
+    pill: 'tone-negative ring-1 ring-inset',
     stroke: '#e11d48',
+    strokeDark: '#fb7185',
   };
 }

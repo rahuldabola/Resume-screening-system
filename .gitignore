@@ -8,3 +8,7 @@ __pycache__/
 *.db
 *.db-*
 *.log
+# Vercel CLI project link and the token it downloads
+.vercel
+.env.local
+.env.*.local

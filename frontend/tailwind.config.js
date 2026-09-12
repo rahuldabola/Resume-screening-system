@@ -1,19 +1,30 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  // Class-based rather than media-based: the theme is a choice the user can
+  // make and we remember, not just whatever the OS says this evening.
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
         sans: ['Inter var', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
-        canvas: '#f6f7fb',
+        // Driven by CSS variables so one `.dark` block inverts the whole app.
+        // `ink` runs dark-on-light in the light theme and light-on-dark in the
+        // dark one, which means every `text-ink-500` and `border-ink-900/10`
+        // in the app flips correctly without a single `dark:` variant.
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
         ink: {
-          900: '#0b1020',
-          700: '#1e2537',
-          500: '#4b5468',
-          300: '#8b93a7',
+          900: 'rgb(var(--ink-900) / <alpha-value>)',
+          700: 'rgb(var(--ink-700) / <alpha-value>)',
+          500: 'rgb(var(--ink-500) / <alpha-value>)',
+          300: 'rgb(var(--ink-300) / <alpha-value>)',
         },
+        // Stays dark in both themes: the hero panels are meant to read as a
+        // lit dark surface, not as "the opposite of the page".
+        night: '#0b1020',
         brand: {
           50: '#eef2ff',
           100: '#e0e7ff',

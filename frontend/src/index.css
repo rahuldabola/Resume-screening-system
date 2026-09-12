@@ -3,6 +3,42 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * The whole theme is these two blocks.
+   *
+   * `ink` is a single ramp that means "furthest from the background" at 900
+   * down to "faintest legible" at 300, so it inverts wholesale: a rule written
+   * once as `text-ink-500` or `border-ink-900/10` is correct in both themes,
+   * and the app needs almost no `dark:` variants. Only colours that carry
+   * meaning rather than hierarchy — the score bands, the stuffing warning —
+   * are restated below for dark.
+   */
+  :root {
+    --canvas: 246 247 251;
+    --surface: 255 255 255;
+    --ink-900: 11 16 32;
+    --ink-700: 30 37 55;
+    --ink-500: 75 84 104;
+    --ink-300: 139 147 167;
+    --grid-line: 11 16 32;
+    --grid-alpha: 0.045;
+    color-scheme: light;
+  }
+
+  .dark {
+    --canvas: 8 11 20;
+    --surface: 19 25 42;
+    --ink-900: 237 240 248;
+    --ink-700: 203 210 224;
+    --ink-500: 150 159 178;
+    --ink-300: 103 112 133;
+    --grid-line: 255 255 255;
+    --grid-alpha: 0.05;
+    /* Tells the browser to darken its own furniture too: scrollbars, form
+       controls, the flash between navigations. */
+    color-scheme: dark;
+  }
+
   html {
     scroll-behavior: smooth;
   }
@@ -10,6 +46,7 @@
   body {
     @apply bg-canvas text-ink-900 antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    transition: background-color 300ms ease, color 300ms ease;
   }
 
   /* One focus treatment for every control, so keyboard users get the same
@@ -35,11 +72,11 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-ink-900/[0.07] bg-white/85 shadow-card backdrop-blur-sm;
+    @apply rounded-2xl border border-ink-900/[0.07] bg-surface/85 shadow-card backdrop-blur-sm;
   }
 
   .field {
-    @apply w-full rounded-xl border border-ink-900/10 bg-white px-3.5 py-2.5 text-sm text-ink-900
+    @apply w-full rounded-xl border border-ink-900/10 bg-surface px-3.5 py-2.5 text-sm text-ink-900
            placeholder:text-ink-300 transition-colors focus:border-brand-500 focus:outline-none
            focus:ring-2 focus:ring-brand-500/20;
   }
@@ -53,8 +90,10 @@
            transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
+  /* text-canvas, not text-white: in the dark theme this button is a pale
+     surface and needs dark text on it. */
   .btn-primary {
-    @apply btn bg-ink-900 text-white shadow-card hover:-translate-y-0.5 hover:bg-ink-700 hover:shadow-lift
+    @apply btn bg-ink-900 text-canvas shadow-card hover:-translate-y-0.5 hover:bg-ink-700 hover:shadow-lift
            active:translate-y-0 active:scale-[0.98];
   }
 
@@ -64,8 +103,8 @@
   }
 
   .btn-ghost {
-    @apply btn border border-ink-900/10 bg-white/80 text-ink-700 hover:-translate-y-0.5
-           hover:border-ink-900/20 hover:bg-white active:translate-y-0;
+    @apply btn border border-ink-900/10 bg-surface/80 text-ink-700 hover:-translate-y-0.5
+           hover:border-ink-900/20 hover:bg-surface active:translate-y-0;
   }
 
   /* Numbers that change in place (scores, counts) shift the layout unless the
@@ -79,13 +118,40 @@
     @apply bg-gradient-to-r from-brand-300 via-white to-brand-200 bg-clip-text text-transparent;
     background-size: 200% 100%;
   }
+
+  /* Meaning-carrying colours, restated for dark. A 50-weight tint is designed
+     to sit on white and glares on a dark surface, so dark uses a translucent
+     wash of the mid weight instead. */
+  .tone-positive {
+    @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20
+           dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/25;
+  }
+
+  .tone-negative {
+    @apply bg-rose-50 text-rose-700 ring-rose-600/20
+           dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/25;
+  }
+
+  .tone-warning {
+    @apply bg-amber-50 text-amber-700 ring-amber-600/20
+           dark:bg-amber-400/10 dark:text-amber-200 dark:ring-amber-400/25;
+  }
+
+  .tone-brand {
+    @apply bg-brand-50 text-brand-600 ring-brand-600/15
+           dark:bg-brand-400/10 dark:text-brand-300 dark:ring-brand-400/25;
+  }
+
+  .tone-neutral {
+    @apply bg-ink-900/[0.04] text-ink-700 ring-ink-900/10;
+  }
 }
 
 @layer utilities {
   .bg-grid {
     background-image:
-      linear-gradient(to right, rgba(11, 16, 32, 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(11, 16, 32, 0.045) 1px, transparent 1px);
+      linear-gradient(to right, rgb(var(--grid-line) / var(--grid-alpha)) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--grid-line) / var(--grid-alpha)) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
   }

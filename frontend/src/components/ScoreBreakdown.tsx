@@ -77,9 +77,9 @@ export function ScoreBreakdown({ result }: ScoreBreakdownProps) {
           hint="TF-IDF cosine similarity, fit across this job's whole candidate pool so it is comparable between candidates."
         />
         {damped && (
-          <div className="rounded-xl bg-amber-50 p-3 ring-1 ring-inset ring-amber-600/20">
-            <p className="text-sm font-semibold text-amber-800">Keyword-stuffing penalty applied</p>
-            <p className="mt-1 text-xs leading-relaxed text-amber-700">
+          <div className="tone-warning rounded-xl p-3 ring-1 ring-inset">
+            <p className="text-sm font-semibold">Keyword-stuffing penalty applied</p>
+            <p className="mt-1 text-xs leading-relaxed opacity-90">
               {Math.round(result.keyword_coverage * 100)}% of this resume is bare skill keywords. Genuine
               prose runs 7–33%. The score was damped to {Math.round(result.stuffing_factor * 100)}% of its
               raw value.

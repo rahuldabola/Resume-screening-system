@@ -1,0 +1,5 @@
+# The Vercel project builds only the frontend (Root Directory = frontend).
+# The other services deploy to Railway, so there is no reason to upload them.
+backend
+ml-service
+.github

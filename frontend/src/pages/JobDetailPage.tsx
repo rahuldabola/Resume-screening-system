@@ -120,7 +120,7 @@ export function JobDetailPage() {
         All job postings
       </Link>
 
-      <Spotlight className="mt-4 rounded-3xl bg-ink-900 shadow-lift">
+      <Spotlight className="mt-4 rounded-3xl bg-night shadow-lift ring-1 ring-white/[0.06] dark:bg-[#131a2e]">
         <div className="absolute inset-0 bg-grid-light opacity-50" aria-hidden="true" />
         <div className="relative p-6 sm:p-8">
           <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{job.title}</h1>

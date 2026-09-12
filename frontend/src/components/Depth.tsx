@@ -19,15 +19,15 @@ export function Aurora() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div
-        className="absolute -left-32 -top-40 h-[34rem] w-[34rem] rounded-full bg-brand-400/25 blur-3xl motion-safe:animate-drift-slow"
+        className="absolute -left-32 -top-40 h-[34rem] w-[34rem] rounded-full bg-brand-400/25 blur-3xl motion-safe:animate-drift-slow dark:bg-brand-500/20"
         style={layer(0.14)}
       />
       <div
-        className="absolute -right-40 top-10 h-[30rem] w-[30rem] rounded-full bg-purple-400/20 blur-3xl motion-safe:animate-drift-medium"
+        className="absolute -right-40 top-10 h-[30rem] w-[30rem] rounded-full bg-purple-400/20 blur-3xl motion-safe:animate-drift-medium dark:bg-purple-600/20"
         style={layer(0.08)}
       />
       <div
-        className="absolute left-1/3 top-[28rem] h-[26rem] w-[26rem] rounded-full bg-sky-300/20 blur-3xl motion-safe:animate-drift-fast"
+        className="absolute left-1/3 top-[28rem] h-[26rem] w-[26rem] rounded-full bg-sky-300/20 blur-3xl motion-safe:animate-drift-fast dark:bg-sky-700/25"
         style={layer(0.2)}
       />
       <div className="absolute inset-0 bg-grid opacity-[0.35]" />

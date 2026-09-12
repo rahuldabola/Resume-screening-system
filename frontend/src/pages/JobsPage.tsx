@@ -97,7 +97,7 @@ export function JobsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10">
-      <Spotlight className="rounded-3xl bg-ink-900 shadow-lift">
+      <Spotlight className="rounded-3xl bg-night shadow-lift ring-1 ring-white/[0.06] dark:bg-[#131a2e]">
         <div className="absolute inset-0 bg-grid-light opacity-60" aria-hidden="true" />
         <div className="relative px-6 py-10 sm:px-10 sm:py-12">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 ring-1 ring-inset ring-white/15">

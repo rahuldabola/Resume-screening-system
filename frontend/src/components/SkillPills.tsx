@@ -8,9 +8,9 @@ interface SkillPillsProps {
 }
 
 const TONE_CLASSES: Record<NonNullable<SkillPillsProps['tone']>, string> = {
-  positive: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-  negative: 'bg-rose-50 text-rose-700 ring-rose-600/20',
-  neutral: 'bg-ink-900/[0.04] text-ink-700 ring-ink-900/10',
+  positive: 'tone-positive',
+  negative: 'tone-negative',
+  neutral: 'tone-neutral',
 };
 
 export function SkillPills({ skills, tone = 'neutral', limit, stagger = false }: SkillPillsProps) {

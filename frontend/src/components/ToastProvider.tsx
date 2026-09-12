@@ -7,7 +7,7 @@ const TONE_STYLES: Record<ToastTone, { ring: string; icon: ReactNode }> = {
   success: {
     ring: 'ring-emerald-600/25',
     icon: (
-      <svg viewBox="0 0 20 20" className="h-5 w-5 text-emerald-600" fill="currentColor" aria-hidden="true">
+      <svg viewBox="0 0 20 20" className="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="currentColor" aria-hidden="true">
         <path d="M10 0a10 10 0 1 0 0 20A10 10 0 0 0 10 0Zm4.7 7.7-5.4 5.4a1 1 0 0 1-1.4 0L5.3 10.5a1 1 0 1 1 1.4-1.4l1.9 1.9 4.7-4.7a1 1 0 1 1 1.4 1.4Z" />
       </svg>
     ),
@@ -15,7 +15,7 @@ const TONE_STYLES: Record<ToastTone, { ring: string; icon: ReactNode }> = {
   error: {
     ring: 'ring-rose-600/25',
     icon: (
-      <svg viewBox="0 0 20 20" className="h-5 w-5 text-rose-600" fill="currentColor" aria-hidden="true">
+      <svg viewBox="0 0 20 20" className="h-5 w-5 text-rose-600 dark:text-rose-400" fill="currentColor" aria-hidden="true">
         <path d="M10 0a10 10 0 1 0 0 20A10 10 0 0 0 10 0Zm0 4a1.1 1.1 0 0 1 1.1 1.1v5.3a1.1 1.1 0 0 1-2.2 0V5.1A1.1 1.1 0 0 1 10 4Zm0 11.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z" />
       </svg>
     ),
@@ -23,7 +23,7 @@ const TONE_STYLES: Record<ToastTone, { ring: string; icon: ReactNode }> = {
   info: {
     ring: 'ring-brand-600/25',
     icon: (
-      <svg viewBox="0 0 20 20" className="h-5 w-5 text-brand-600" fill="currentColor" aria-hidden="true">
+      <svg viewBox="0 0 20 20" className="h-5 w-5 text-brand-600 dark:text-brand-400" fill="currentColor" aria-hidden="true">
         <path d="M10 0a10 10 0 1 0 0 20A10 10 0 0 0 10 0Zm0 4.3a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4ZM11.1 15a1.1 1.1 0 0 1-2.2 0V9.3a1.1 1.1 0 0 1 2.2 0V15Z" />
       </svg>
     ),
@@ -61,7 +61,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`animate-toast-in pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-white/95 p-3.5 shadow-lift ring-1 backdrop-blur ${TONE_STYLES[toast.tone].ring}`}
+            className={`animate-toast-in pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-surface/95 p-3.5 shadow-lift ring-1 backdrop-blur ${TONE_STYLES[toast.tone].ring}`}
           >
             <span className="mt-px shrink-0">{TONE_STYLES[toast.tone].icon}</span>
             <p className="flex-1 text-sm font-medium text-ink-900">{toast.message}</p>

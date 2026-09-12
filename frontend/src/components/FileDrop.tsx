@@ -41,13 +41,13 @@ export function FileDrop({ file, onSelect, accept }: FileDropProps) {
 
   if (file) {
     return (
-      <div className="flex items-center gap-3 rounded-xl bg-brand-50 p-3 ring-1 ring-inset ring-brand-600/20">
-        <svg viewBox="0 0 20 20" className="h-5 w-5 shrink-0 text-brand-600" fill="currentColor" aria-hidden="true">
+      <div className="tone-brand flex items-center gap-3 rounded-xl p-3 ring-1 ring-inset">
+        <svg viewBox="0 0 20 20" className="h-5 w-5 shrink-0" fill="currentColor" aria-hidden="true">
           <path d="M4 2.5A1.5 1.5 0 0 1 5.5 1h5.9L16 5.6v11.9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 17.5v-15Zm7.5 0V6H15l-3.5-3.5Z" />
         </svg>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-ink-900">{file.name}</p>
-          <p className="text-xs text-ink-500">{readableSize(file.size)}</p>
+          <p className="truncate text-sm font-medium">{file.name}</p>
+          <p className="text-xs opacity-75">{readableSize(file.size)}</p>
         </div>
         <button
           type="button"
@@ -55,7 +55,7 @@ export function FileDrop({ file, onSelect, accept }: FileDropProps) {
             onSelect(null);
             if (inputRef.current) inputRef.current.value = '';
           }}
-          className="rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 hover:bg-white hover:text-ink-900"
+          className="rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 hover:bg-surface hover:text-ink-900"
         >
           Remove
         </button>
@@ -73,7 +73,7 @@ export function FileDrop({ file, onSelect, accept }: FileDropProps) {
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         className={`rounded-xl border-2 border-dashed p-5 text-center transition-colors ${
-          dragging ? 'border-brand-500 bg-brand-50' : 'border-ink-900/12 bg-ink-900/[0.015] hover:border-ink-900/25'
+          dragging ? 'border-brand-500 bg-brand-500/10' : 'border-ink-900/12 bg-ink-900/[0.015] hover:border-ink-900/25'
         }`}
       >
         <svg viewBox="0 0 24 24" className="mx-auto h-6 w-6 text-ink-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

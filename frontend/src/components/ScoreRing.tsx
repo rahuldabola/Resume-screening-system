@@ -1,4 +1,5 @@
 import { useCountUp, usePrefersReducedMotion } from '../lib/motion';
+import { useIsDark } from '../lib/theme';
 import { bandFor } from './scoreBands';
 
 interface ScoreRingProps {
@@ -18,7 +19,9 @@ interface ScoreRingProps {
  */
 export function ScoreRing({ score, size = 56, delay = 0 }: ScoreRingProps) {
   const reduced = usePrefersReducedMotion();
+  const isDark = useIsDark();
   const band = bandFor(score);
+  const strokeColor = isDark ? band.strokeDark : band.stroke;
   const stroke = size >= 56 ? 5 : 4;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -33,7 +36,7 @@ export function ScoreRing({ score, size = 56, delay = 0 }: ScoreRingProps) {
         <span
           aria-hidden="true"
           className="absolute inset-0 animate-pulse-ring rounded-full"
-          style={{ boxShadow: `0 0 0 3px ${band.stroke}` }}
+          style={{ boxShadow: `0 0 0 3px ${strokeColor}` }}
         />
       )}
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
@@ -51,7 +54,7 @@ export function ScoreRing({ score, size = 56, delay = 0 }: ScoreRingProps) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={band.stroke}
+          stroke={strokeColor}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}

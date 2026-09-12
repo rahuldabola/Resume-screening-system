@@ -198,6 +198,11 @@ can reach the service anyway.
 | ml-service | `HOST` / `PORT` | `0.0.0.0` / `8000` | platform-assigned bind |
 | frontend | `VITE_API_URL` | the backend's `/api` URL | baked in at build time, not read at runtime |
 
+The Vercel project's Root Directory is `frontend`, and `.vercelignore` keeps the two
+Railway services out of the upload. Both matter: with the root left at the repo root a
+git-triggered build finds no `package.json`, installs nothing, and fails on `vite:
+command not found`.
+
 `VITE_API_URL` is a build-time substitution: changing the backend URL means rebuilding
 the frontend, not restarting it.
 
@@ -210,8 +215,11 @@ railway add -s ml-service && railway add -s backend      # then set each root di
 railway up -s ml-service
 railway up -s backend
 
-# Vercel — from frontend/, with the backend URL baked into the build
-vercel deploy --prod -b VITE_API_URL=https://<backend-host>/api
+# Vercel — from the repo root. The project's Root Directory is set to
+# "frontend", so a git push builds the same way this command does.
+vercel link --project <name>
+vercel env add VITE_API_URL production     # the backend's /api URL
+vercel deploy --prod
 ```
 
 Deployed state persists on the Railway volume mounted at `/app/data`. Rotating the

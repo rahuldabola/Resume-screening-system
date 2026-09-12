@@ -16,6 +16,22 @@
       rel="stylesheet"
     />
     <title>ScreenSmart — AI-Powered Resume Screening</title>
+    <script>
+      // Runs before first paint on purpose: deciding the theme in React instead
+      // would render the light palette for a frame and flash white at someone
+      // who chose dark.
+      (function () {
+        try {
+          var stored = localStorage.getItem('screensmart-theme');
+          var dark = stored
+            ? stored === 'dark'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {
+          // Storage blocked. Light theme, and the toggle still works.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
