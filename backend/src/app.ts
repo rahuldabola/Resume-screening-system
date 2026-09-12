@@ -10,7 +10,15 @@ import scoringRoutes from './modules/scoring/scoring.routes';
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: env.clientOrigin }));
+  // Railway/Render/Fly put a proxy in front of the app, so req.ip is the
+  // proxy's address unless the first X-Forwarded-For hop is trusted. Exactly
+  // one hop: trusting the whole chain lets a client prepend a forged address
+  // and hand itself a fresh rate-limit bucket per request.
+  if (env.trustProxy) {
+    app.set('trust proxy', 1);
+  }
+
+  app.use(cors({ origin: env.clientOrigins }));
   app.use(express.json());
 
   // Skipped in tests: the whole suite drives one createApp() instance
