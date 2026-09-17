@@ -113,6 +113,7 @@ Spearman is the headline: +0.91 means the model's ordering closely tracks the hu
 
 ```
 frontend/          React + TypeScript + Tailwind SPA
+  src/             components, pages and API layer, each with tests alongside
 backend/           Node.js + Express + TypeScript REST API, SQLite persistence
   src/modules/     jobs, candidates, scoring — each with routes + service + tests
   src/db/          schema + in-place migrations, with tests against a legacy database
@@ -120,6 +121,7 @@ scripts/           smoke_test.py — end-to-end checks against a live deployment
 ml-service/        Python + FastAPI — resume parsing, skill extraction, scoring
   evaluation/      both labeled datasets + the two scripts that produce the numbers above
   tests/           pytest unit tests for scoring, extraction, parsing, and the API
+  pyproject.toml   ruff configuration
 docker-compose.yml runs all three services together
 .github/workflows/ CI: lint + typecheck + test every service, run both evaluations,
                    then build all Docker images
@@ -229,11 +231,11 @@ value and redeploying both services.
 
 ## Tests
 
-**148 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
+**319 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
 
 ```bash
 # ML service: extraction, disambiguation, negation, scoring, stuffing, endpoints
-cd ml-service && python -m pytest tests/ -v              # 56 tests
+cd ml-service && python -m ruff check . && python -m pytest tests/ -v   # 56 tests
 
 # ML service: both evaluations
 cd ml-service && python -m evaluation.evaluate
@@ -242,9 +244,21 @@ cd ml-service && python -m evaluation.evaluate_ranking
 # Backend: unit + integration + schema migration (Jest + Supertest, ML calls mocked)
 cd backend && npm test                                    # 92 tests
 
-# Frontend
-cd frontend && npm run lint && npm run build
+# Frontend: components, pages, API layer (Vitest + Testing Library, jsdom)
+cd frontend && npm test                                   # 171 tests
+cd frontend && npm run test:coverage                      # 93% of statements
+
+# Frontend: lint, typecheck, production build
+cd frontend && npm run lint && npx tsc -b && npm run build
 ```
+
+The frontend tests are written against what someone using the app would see, so
+they cover the things that are easy to break quietly: that an unreachable `GET`
+is retried once and an unreachable `POST` is never retried, that ranking
+collapses an open breakdown whose row ids no longer exist, that the score bands
+agree at exactly 70 and 40, and that the `role="alert"` on errors, the live
+region toasts land in, and the labelled file input behind the drag-and-drop zone
+all stay where a screen reader can find them.
 
 ### Smoke test against a running deployment
 
