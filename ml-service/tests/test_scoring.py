@@ -3,14 +3,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.scoring import (  # noqa: E402
+from app.scoring import (
     STUFFING_MIN_FACTOR,
     compute_match,
     compute_matches,
     compute_tfidf_similarity,
     stuffing_factor,
 )
-from app.skills_taxonomy import extract_skills, keyword_coverage  # noqa: E402
+from app.skills_taxonomy import extract_skills, keyword_coverage
 
 
 def test_extract_skills_finds_known_aliases():

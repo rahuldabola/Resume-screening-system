@@ -32,7 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.scoring import compute_matches  # noqa: E402
+from app.scoring import compute_matches
 
 DATASET_PATH = Path(__file__).parent / "ranking_dataset.json"
 
@@ -66,7 +66,7 @@ def spearman(a: list[float], b: list[float]) -> float:
     n = len(a)
     mean_a, mean_b = sum(rank_a) / n, sum(rank_b) / n
 
-    covariance = sum((x - mean_a) * (y - mean_b) for x, y in zip(rank_a, rank_b))
+    covariance = sum((x - mean_a) * (y - mean_b) for x, y in zip(rank_a, rank_b, strict=True))
     variance_a = sum((x - mean_a) ** 2 for x in rank_a)
     variance_b = sum((y - mean_b) ** 2 for y in rank_b)
 
@@ -95,7 +95,7 @@ def evaluate_job(job_key: str, job_text: str, entries: list[dict], resumes: dict
     results = compute_matches([resumes[key] for key in resume_keys], job_text)
     scores = [result.match_score for result in results]
 
-    ordered = sorted(zip(resume_keys, grades, scores), key=lambda row: -row[2])
+    ordered = sorted(zip(resume_keys, grades, scores, strict=True), key=lambda row: -row[2])
     grades_in_model_order = [grade for _, grade, _ in ordered]
 
     rho = spearman(grades, scores)

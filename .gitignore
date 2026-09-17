@@ -12,3 +12,4 @@ __pycache__/
 .vercel
 .env.local
 .env.*.local
+.ruff_cache/

@@ -98,7 +98,7 @@ def score_batch(payload: ScoreBatchRequest):
     return ScoreBatchResponse(
         results=[
             {"id": resume.id, **asdict(result)}
-            for resume, result in zip(payload.resumes, results)
+            for resume, result in zip(payload.resumes, results, strict=True)
         ]
     )
 
@@ -112,7 +112,7 @@ async def parse_resume(file: UploadFile = File(...)):
     try:
         text = extract_text(file.filename or "resume.txt", content)
     except UnsupportedFileTypeError as err:
-        raise HTTPException(status_code=400, detail=str(err))
+        raise HTTPException(status_code=400, detail=str(err)) from err
 
     if not text.strip():
         raise HTTPException(status_code=422, detail="Could not extract any text from this file.")

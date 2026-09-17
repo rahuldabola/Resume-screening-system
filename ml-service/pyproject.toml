@@ -1,0 +1,23 @@
+[tool.ruff]
+# The Python here is formatted by hand, in the same wide style as the two
+# TypeScript services. 130 is where the existing code already sits rather than
+# a target to grow into.
+line-length = 130
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes: undefined names, unused imports
+    "I",   # import ordering
+    "B",   # bugbear: mutable defaults, loop-variable capture, silent except
+    "UP",  # constructs made obsolete by the Python version this targets
+    "RUF", # ruff's own checks, including noqa comments that no longer apply
+]
+
+ignore = [
+    # FastAPI reads its dependency and upload wiring *out of* the argument
+    # defaults -- `file: UploadFile = File(...)` is the documented idiom, not
+    # the mutable-default bug this rule exists to catch.
+    "B008",
+]

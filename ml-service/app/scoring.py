@@ -101,7 +101,7 @@ def _tfidf_similarities(resume_texts: list[str], job_description: str) -> list[f
     if not job_description.strip():
         return [0.0] * len(resume_texts)
 
-    corpus = resume_texts + [job_description]
+    corpus = [*resume_texts, job_description]
     vectorizer = TfidfVectorizer(stop_words="english", max_features=2000)
     try:
         matrix = vectorizer.fit_transform(corpus)
@@ -114,7 +114,7 @@ def _tfidf_similarities(resume_texts: list[str], job_description: str) -> list[f
 
     return [
         0.0 if not text.strip() else max(0.0, min(1.0, float(value)))
-        for text, value in zip(resume_texts, similarities)
+        for text, value in zip(resume_texts, similarities, strict=True)
     ]
 
 
@@ -139,7 +139,7 @@ def compute_matches(resume_texts: list[str], job_description: str) -> list[Match
     similarities = _tfidf_similarities(resume_texts, job_description)
 
     results = []
-    for resume_text, tfidf_similarity in zip(resume_texts, similarities):
+    for resume_text, tfidf_similarity in zip(resume_texts, similarities, strict=True):
         resume_skills = extract_skills(resume_text)
         matched = resume_skills & required_skills
         missing = required_skills - resume_skills

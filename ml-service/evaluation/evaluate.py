@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.scoring import compute_matches  # noqa: E402
+from app.scoring import compute_matches
 
 DATASET_PATH = Path(__file__).parent / "eval_dataset.json"
 
@@ -52,7 +52,7 @@ def score_pairs(data):
     for job_key, job_pairs in by_job.items():
         resume_keys = [pair["resume"] for pair in job_pairs]
         results = compute_matches([resumes[key] for key in resume_keys], jobs[job_key])
-        for pair, result in zip(job_pairs, results):
+        for pair, result in zip(job_pairs, results, strict=True):
             scored.append({
                 "resume": pair["resume"],
                 "job": job_key,
@@ -76,7 +76,7 @@ def sweep_threshold(scored):
         accuracies.append(correct / len(scored))
 
     best_accuracy = max(accuracies)
-    tied = [t for t, acc in zip(candidates, accuracies) if acc == best_accuracy]
+    tied = [t for t, acc in zip(candidates, accuracies, strict=True) if acc == best_accuracy]
     return tied[0], best_accuracy, tied
 
 

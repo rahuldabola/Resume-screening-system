@@ -6,16 +6,16 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.resume_parser import UnsupportedFileTypeError, extract_text  # noqa: E402
+from app.resume_parser import UnsupportedFileTypeError, extract_text
 
 
 def test_extract_text_from_txt():
-    content = "Backend engineer experienced with Node.js.".encode("utf-8")
+    content = b"Backend engineer experienced with Node.js."
     assert extract_text("resume.txt", content) == "Backend engineer experienced with Node.js."
 
 
 def test_extract_text_from_txt_is_case_insensitive_on_extension():
-    content = "Some resume text.".encode("utf-8")
+    content = b"Some resume text."
     assert extract_text("RESUME.TXT", content) == "Some resume text."
 
 
