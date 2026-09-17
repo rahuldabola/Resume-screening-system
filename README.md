@@ -50,6 +50,8 @@ An alias in `AMBIGUOUS_ALIASES` only counts when the surrounding 25 characters c
 
 **Negation.** "No professional Python experience" and "never used Docker" both contain the keyword while denying it. A negated-capability phrase suppresses the skill names it governs, stopping at the end of the clause — so "Never used Docker. Kubernetes in production for 3 years" still credits Kubernetes, and "Zero downtime deployments with Docker" is not read as a denial.
 
+A clause ends at punctuation *or* at a contrast conjunction, because "No Python experience, but 8 years of Kubernetes" denies the first skill and claims the second. A comma alone is not a boundary — "no experience with Python, Django or Flask" denies all three — so it is the conjunction that is matched. Getting this wrong is the one error this module cannot see itself make: a dropped skill leaves nothing on screen to notice, unlike a false positive that shows up as a pill nobody claimed.
+
 ### Keyword stuffing is detected, not ignored
 
 A resume that is nothing but a comma-separated list of every skill in the taxonomy has a perfect skill overlap and no evidence behind it. Measured over the labelled corpus, genuine resume and job prose has a keyword density of **0.07–0.33**; a bare skills dump runs **0.85+**. Scores are damped on a ramp that starts at 0.40 — above anything real prose produces — down to a floor of 20%. The penalty and the density are returned by the API and shown in the UI, so a recruiter can see *why* a keyword-perfect candidate ranks below a candidate who described actual work.
@@ -231,11 +233,11 @@ value and redeploying both services.
 
 ## Tests
 
-**319 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
+**330 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
 
 ```bash
 # ML service: extraction, disambiguation, negation, scoring, stuffing, endpoints
-cd ml-service && python -m ruff check . && python -m pytest tests/ -v   # 56 tests
+cd ml-service && python -m ruff check . && python -m pytest tests/ -v   # 67 tests
 
 # ML service: both evaluations
 cd ml-service && python -m evaluation.evaluate

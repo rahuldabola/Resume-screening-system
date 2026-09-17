@@ -160,8 +160,23 @@ _NEGATED_CAPABILITY = re.compile(
 # A negated phrase governs the skill names that follow it, but only to the end
 # of the clause -- "Never used Docker. Kubernetes in production for 3 years"
 # must not strip Kubernetes.
+#
+# A contrast conjunction ends that reach just as firmly as punctuation does.
+# "No Python experience, but 8 years of Kubernetes" denies Python and claims
+# Kubernetes; without `but` here the 45-character reach runs straight through
+# the contrast and drops a skill the candidate does have. That is a false
+# negative, and unlike the false positives this module is built around, it
+# leaves no trace on screen -- the skill is simply absent.
+#
+# It is the conjunction that is matched, never the comma before it: a bare
+# comma must not break, because "no experience with Python, Django or Flask"
+# denies all three. "aside from"/"other than" single a skill *out* of a denial
+# ("no backend experience other than Flask" claims Flask), so they break too.
 _NEGATION_REACH = 45
-_CLAUSE_BREAK = re.compile(r"[.;!?\n]")
+_CLAUSE_BREAK = re.compile(
+    r"[.;!?\n]"
+    r"|\b(?:but|although|though|however|whereas|aside from|apart from|other than)\b"
+)
 
 
 @dataclass(frozen=True)

@@ -7,6 +7,8 @@ Every case here is a sentence a real resume could plausibly contain.
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.skills_taxonomy import (
@@ -80,6 +82,46 @@ def test_negation_does_not_swallow_unrelated_phrasing():
 def test_a_skill_claimed_before_a_later_denial_still_counts():
     text = "Docker in production since 2019. No formal accounting background."
     assert "docker" in extract_skills(text)
+
+
+def test_a_contrast_conjunction_ends_the_denial():
+    """"No X, but Y" claims Y.
+
+    A comma is not a clause break, so without the conjunction as a boundary the
+    negation's reach ran straight through the contrast and dropped skills the
+    candidate does have. That is a false negative, which -- unlike the false
+    positives this module is built around -- leaves no trace on screen.
+    """
+    text = "No Python experience, but 8 years of Kubernetes and Docker in production."
+    skills = extract_skills(text)
+
+    assert "python" not in skills
+    assert {"docker", "kubernetes"} <= skills
+
+
+def test_contrast_after_a_denial_without_a_comma():
+    skills = extract_skills("Never used Docker but Kubernetes daily.")
+
+    assert "docker" not in skills
+    assert "kubernetes" in skills
+
+
+@pytest.mark.parametrize(
+    "conjunction",
+    ["but", "although", "though", "however", "whereas", "aside from", "apart from", "other than"],
+)
+def test_every_contrast_conjunction_ends_the_denial(conjunction):
+    text = f"No backend experience {conjunction} Flask in production."
+    assert "flask" in extract_skills(text)
+
+
+def test_a_bare_comma_does_not_end_the_denial():
+    """The conjunction is the boundary, not the comma that usually precedes it.
+
+    A comma-separated list after one negation denies every item in it, so
+    breaking on the comma itself would credit Django and Flask here.
+    """
+    assert extract_skills("No experience with Python, Django or Flask.") == set()
 
 
 # ---- mentions and coverage ----------------------------------------------
