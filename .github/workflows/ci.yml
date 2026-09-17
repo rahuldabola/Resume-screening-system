@@ -19,6 +19,11 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
+
+      # Lint first: it is seconds rather than minutes, and it names the line.
+      - name: Lint
+        run: python -m ruff check .
+
       - run: python -m pytest tests/ -v
 
       # Both evaluations run on every push, so the numbers quoted in the README
@@ -44,7 +49,7 @@ jobs:
       - run: npm test
 
   frontend:
-    name: Frontend (lint + typecheck + build)
+    name: Frontend (lint + typecheck + tests + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -56,6 +61,14 @@ jobs:
           node-version: "22"
       - run: npm ci
       - run: npm run lint
+
+      # `npm run build` typechecks as its first step, but only reports the
+      # first failure it hits. Running tsc on its own first means a type error
+      # is reported as a type error, with every site listed.
+      - name: Typecheck
+        run: npx tsc -b --force
+
+      - run: npm test
       - run: npm run build
 
   docker:
