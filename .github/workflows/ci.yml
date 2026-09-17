@@ -24,6 +24,12 @@ jobs:
       - name: Lint
         run: python -m ruff check .
 
+      # The smoke test lives outside this directory, so `ruff check .` above
+      # never saw it -- it was the one Python file in the repo nothing linted.
+      # It is checked against the same config rather than a default rule set.
+      - name: Lint the deployment smoke test
+        run: python -m ruff check --config pyproject.toml ../scripts
+
       - run: python -m pytest tests/ -v
 
       # Both evaluations run on every push, so the numbers quoted in the README

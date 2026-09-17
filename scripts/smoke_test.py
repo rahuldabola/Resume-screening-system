@@ -173,6 +173,18 @@ pos = upload("Not A Denial", "Zero downtime deployments with Docker and automate
 found = skills_of(pos) if pos.status_code == 201 else set()
 check("'Zero downtime ... with Docker' is not read as a denial", "docker" in found, f"extracted {sorted(found)}")
 
+# A comma is not a clause break, so before the contrast conjunction was made
+# one, this negation reached past "but" and swallowed both skills the
+# candidate was actually claiming.
+contrast = upload(
+    "Contrast Case",
+    "No Python experience, but 8 years of Kubernetes and Docker in production.",
+)
+found = skills_of(contrast) if contrast.status_code == 201 else set()
+check("'No X, but Y' still denies X", "python" not in found, f"extracted {sorted(found)}")
+check("'No X, but Y' credits Y rather than swallowing it",
+      {"docker", "kubernetes"} <= found, f"extracted {sorted(found)}")
+
 dotted = upload("Dotted Token", "Backend services in Node.js with Express and PostgreSQL.")
 found = skills_of(dotted) if dotted.status_code == 201 else set()
 check("'node.js' does not leak a bare 'js' into JavaScript",
@@ -256,7 +268,7 @@ if job_id:
 
         print(f"\n  Ranking returned in {rank_ms:.0f} ms:")
         for i, row in enumerate(rows, 1):
-            flag = "  [stuffing x%.2f]" % row["stuffing_factor"] if row["stuffing_factor"] < 1 else ""
+            flag = f"  [stuffing x{row['stuffing_factor']:.2f}]" if row["stuffing_factor"] < 1 else ""
             print(f"    {i}. {row['candidate_name']:<24} {row['match_score']:>5}%"
                   f"  skills={row['skill_overlap_score']:>5}  tfidf={row['tfidf_similarity']:>5}{flag}")
         print()
@@ -337,7 +349,7 @@ def batch(resumes):
     return r.json()["results"][0]["match_score"] if r.status_code == 200 else None
 
 small = batch([resume, noise[0]])
-large = batch([resume] + noise)
+large = batch([resume, *noise])
 check("the same pair scores differently in a pool of 2 vs a pool of 5",
       small is not None and large is not None and small != large,
       f"pool of 2 = {small}, pool of 5 = {large}")

@@ -271,7 +271,7 @@ to the real deployment over the real network:
 
 ```bash
 export ML_SERVICE_TOKEN=...            # same value the ML service runs with
-python scripts/smoke_test.py           # 44 checks, ~25s
+python scripts/smoke_test.py           # 46 checks, ~20s
 ```
 
 It checks the claims this README makes rather than only that endpoints answer: that
