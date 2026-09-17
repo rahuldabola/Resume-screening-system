@@ -73,13 +73,16 @@ export function JobDetailPage() {
   }
 
   const summary = useMemo(() => {
-    if (results.length === 0) return null;
+    // Reading the top result first is what proves the list is non-empty, so
+    // the guard and the value it protects cannot drift apart.
+    const top = results[0];
+    if (!top) return null;
     const scores = results.map((r) => r.match_score);
     return {
       pool: results.length,
       strong: scores.filter((s) => s >= 70).length,
       average: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
-      top: results[0],
+      top,
     };
   }, [results]);
 

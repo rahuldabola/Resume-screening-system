@@ -41,7 +41,9 @@ export function useInView<T extends HTMLElement>(rootMargin = '-40px') {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        // An observer with one target always reports at least one entry, but
+        // the array type cannot promise that.
+        if (entry?.isIntersecting) {
           setInView(true);
           observer.disconnect();
         }
