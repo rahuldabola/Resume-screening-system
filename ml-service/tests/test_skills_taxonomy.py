@@ -124,6 +124,63 @@ def test_a_bare_comma_does_not_end_the_denial():
     assert extract_skills("No experience with Python, Django or Flask.") == set()
 
 
+# ---- quantities --------------------------------------------------------
+#
+# The hard case for the technical-support test: a sentence counting machines is
+# full of genuine technical words, so the surrounding context *endorses* the
+# ambiguous alias instead of ruling it out.
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Ran a 40-node Kubernetes cluster.",
+        "Deployed a 3-node Redis cluster.",
+        "Scaled to a 12-node Elasticsearch cluster with Docker.",
+    ],
+)
+def test_a_node_count_is_not_the_node_runtime(text):
+    assert "node.js" not in extract_skills(text)
+
+
+def test_the_rest_of_a_node_count_sentence_still_extracts():
+    """Only the miscounted alias is dropped, not the real skills beside it."""
+    assert "kubernetes" in extract_skills("Ran a 40-node Kubernetes cluster.")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Dispensed 250 ml samples using automated testing equipment.",
+        "Managed 500 ml of reagent per assay in the lab pipeline.",
+    ],
+)
+def test_a_volume_in_millilitres_is_not_machine_learning(text):
+    assert "machine learning" not in extract_skills(text)
+
+
+def test_capitalised_ml_after_a_number_is_still_machine_learning():
+    """Capitalisation is what separates "5 ML models" from "500 ml of reagent"."""
+    assert "machine learning" in extract_skills("Trained 5 ML models with scikit-learn.")
+
+
+@pytest.mark.parametrize(
+    ("text", "skill"),
+    [
+        # A digit and a space is not a quantity compound -- these are real claims.
+        ("Built 3 Go services behind an API gateway.", "go"),
+        ("Deployed 6 Node containers behind nginx for the API.", "node.js"),
+        ("Maintained 5 Node.js microservices in production.", "node.js"),
+        # Nothing numeric at all; the guard must not reach these.
+        ("Go developer with 4 years of backend experience.", "go"),
+        ("Node.js and Express backend deployed on AWS.", "express"),
+        ("Skills: python, ml, docker, kubernetes", "machine learning"),
+    ],
+)
+def test_the_quantity_guard_does_not_reach_a_real_claim(text, skill):
+    assert skill in extract_skills(text)
+
+
 # ---- mentions and coverage ----------------------------------------------
 
 

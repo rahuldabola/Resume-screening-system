@@ -40,13 +40,15 @@ The result is then damped if the resume looks keyword-stuffed (see below).
 
 ### Extraction is built around avoiding false positives
 
-Naive keyword matching gets a hiring shortlist wrong in two specific ways, and both are handled explicitly rather than waved at in a limitations section:
+Naive keyword matching gets a hiring shortlist wrong in three specific ways, and each is handled explicitly rather than waved at in a limitations section:
 
 **Ambiguous aliases.** Several skill names are also ordinary English words. A plain word-boundary match reads this sales resume as a Go/Express/ML engineer:
 
 > "I go above and beyond to express our value and drive go-to-market strategy. Managed 500 ml of reagent per assay."
 
 An alias in `AMBIGUOUS_ALIASES` only counts when the surrounding 25 characters contain a technical cue, or an unambiguous *technical* skill. (Non-technical skills deliberately don't count as support — otherwise "sales" sitting next to "go" validates it.) A related structural fix: `\bjs\b` matches inside "node.js", so every alias carries a `(?<!\.)` guard against matching the tail of a dotted token.
+
+**Quantities**, which are the case that context cannot solve. "Ran a 40-node Kubernetes cluster" and "dispensed 250 ml samples using automated testing equipment" both scored a skill nobody claimed — and the technical-cue test *cannot* catch them, because a sentence counting infrastructure is exactly the kind that is densest in real technical words. The context endorses the alias instead of ruling it out. A number written directly onto an ambiguous alias therefore makes it a quantity: `40-node` is a count, `250 ml` is a volume. A digit and a space is deliberately not enough — "Built 3 Go services" is an ordinary way to write a real claim — and for the unit case capitalisation decides it, so "5 ML models" survives and "250 ml samples" does not.
 
 **Negation.** "No professional Python experience" and "never used Docker" both contain the keyword while denying it. A negated-capability phrase suppresses the skill names it governs, stopping at the end of the clause — so "Never used Docker. Kubernetes in production for 3 years" still credits Kubernetes, and "Zero downtime deployments with Docker" is not read as a denial.
 
@@ -233,11 +235,11 @@ value and redeploying both services.
 
 ## Tests
 
-**330 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
+**343 automated tests**, all run on every push via [CI](https://github.com/rahuldabola/Resume-screening-system/actions/workflows/ci.yml) — including a job that builds all three images with `docker compose build` on GitHub's runners, so the containerization claim is verified on real infrastructure rather than asserted.
 
 ```bash
 # ML service: extraction, disambiguation, negation, scoring, stuffing, endpoints
-cd ml-service && python -m ruff check . && python -m pytest tests/ -v   # 67 tests
+cd ml-service && python -m ruff check . && python -m pytest tests/ -v   # 80 tests
 
 # ML service: both evaluations
 cd ml-service && python -m evaluation.evaluate
@@ -271,7 +273,7 @@ to the real deployment over the real network:
 
 ```bash
 export ML_SERVICE_TOKEN=...            # same value the ML service runs with
-python scripts/smoke_test.py           # 46 checks, ~20s
+python scripts/smoke_test.py           # 50 checks, ~20s
 ```
 
 It checks the claims this README makes rather than only that endpoints answer: that

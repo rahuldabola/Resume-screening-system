@@ -185,6 +185,25 @@ check("'No X, but Y' still denies X", "python" not in found, f"extracted {sorted
 check("'No X, but Y' credits Y rather than swallowing it",
       {"docker", "kubernetes"} <= found, f"extracted {sorted(found)}")
 
+# A sentence that counts machines is dense in genuine technical words, so the
+# context test endorses the ambiguous alias instead of ruling it out. Both of
+# these scored a skill the resume never claimed.
+quantity = upload(
+    "Quantity Case",
+    "Ran a 40-node Kubernetes cluster and dispensed 250 ml samples using "
+    "automated testing equipment.",
+)
+found = skills_of(quantity) if quantity.status_code == 201 else set()
+check("'40-node cluster' is not the Node.js runtime", "node.js" not in found, f"extracted {sorted(found)}")
+check("'250 ml samples' is not machine learning",
+      "machine learning" not in found, f"extracted {sorted(found)}")
+check("the real skill in the same sentence still counts", "kubernetes" in found, f"extracted {sorted(found)}")
+
+real_counts = upload("Counted Claims", "Built 3 Go services and 5 ML models with scikit-learn.")
+found = skills_of(real_counts) if real_counts.status_code == 201 else set()
+check("a counted real claim survives the quantity guard",
+      {"go", "machine learning"} <= found, f"extracted {sorted(found)}")
+
 dotted = upload("Dotted Token", "Backend services in Node.js with Express and PostgreSQL.")
 found = skills_of(dotted) if dotted.status_code == 201 else set()
 check("'node.js' does not leak a bare 'js' into JavaScript",

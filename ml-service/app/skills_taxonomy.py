@@ -146,6 +146,28 @@ _TECHNICAL_CUE = re.compile(
 # sales resume validate an unrelated "go".
 _SUPPORT_WINDOW = 25
 
+# A number written directly onto an ambiguous alias makes it a quantity, and
+# the technical-support test cannot see that -- it is exactly the sentences
+# that count infrastructure which are densest in technical cues. "Ran a 40-node
+# Kubernetes cluster" sizes a cluster; "Dispensed 250 ml samples using
+# automated testing equipment" measures a liquid. Both scored a skill the
+# resume never claimed, propped up by the real technical words beside them.
+#
+# Only the digit-hyphen compound is treated as a quantity on its own, because
+# it is never anything else. A digit and a space is not enough: "Built 3 Go
+# services" is an ordinary way to write a real claim.
+_QUANTITY_COMPOUND = re.compile(r"\d\s*-\s*$")
+
+# Aliases that are also units of measure, where a bare number in front is a
+# measurement. Capitalisation decides it: nobody writes "500 ML of reagent",
+# and nobody writes "5 ml models" -- so "5 ML models" survives this and
+# "250 ml samples" does not.
+_UNIT_ALIASES = frozenset({"ml"})
+_UNIT_QUANTITY = re.compile(r"\d\s*$")
+
+# Enough left context to see a quantity and its separator, and no more.
+_QUANTITY_LOOKBEHIND = 6
+
 # A capability the writer is asserting they *do not* have. Matches phrases
 # like "no professional Python experience", "never used Docker", "without
 # Kubernetes exposure" -- a negation word followed, within a few words, by a
@@ -276,12 +298,25 @@ def find_skill_mentions(text: str) -> list[SkillMention]:
         and not is_negated(start, end)
     ]
 
+    def is_quantity(alias: str, start: int, end: int) -> bool:
+        """True if a number in front makes this alias a count or a measurement."""
+        before = lowered[max(0, start - _QUANTITY_LOOKBEHIND):start]
+        if _QUANTITY_COMPOUND.search(before):
+            return True
+        return (
+            alias in _UNIT_ALIASES
+            and _UNIT_QUANTITY.search(before) is not None
+            # Read from the source, not `lowered`: the capitals are the signal.
+            and not text[start:end].isupper()
+        )
+
     accepted = []
     for skill, alias, start, end in raw:
         if is_negated(start, end):
             continue
-        if alias in AMBIGUOUS_ALIASES and not _has_technical_support(
-            lowered, start, end, unambiguous_spans
+        if alias in AMBIGUOUS_ALIASES and (
+            is_quantity(alias, start, end)
+            or not _has_technical_support(lowered, start, end, unambiguous_spans)
         ):
             continue
         accepted.append(SkillMention(skill=skill, alias=alias, start=start, end=end))
